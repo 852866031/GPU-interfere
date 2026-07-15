@@ -1,0 +1,72 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram id="prog-vs-hw" name="Programming vs Hardware">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Column headers -->
+        <mxCell id="hdrL" value="Programming model" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontFamily=monospace;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrLline" value="" style="line;strokeWidth=2;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="52" width="230" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrR" value="Hardware organization" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontFamily=monospace;" vertex="1" parent="1">
+          <mxGeometry x="480" y="20" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="hdrRline" value="" style="line;strokeWidth=2;html=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="52" width="230" height="10" as="geometry" />
+        </mxCell>
+
+        <!-- Left column: programming-model boxes -->
+        <mxCell id="kernel" value="Kernel / Grid" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="block" value="Thread Block" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="230" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="warp" value="Warp" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="370" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="threads" value="Threads" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="510" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Right column: hardware descriptions -->
+        <mxCell id="hwBlock" value="assigned to one SM" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;align=left;spacingLeft=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="230" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="hwWarp" value="managed by one SMSP&#10;selected by a warp scheduler" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;align=left;spacingLeft=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="360" width="300" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="hwThreads" value="executed through hardware lanes&#10;in FP/INT units, Tensor Cores,&#10;load/store units, and other pipelines" style="rounded=0;whiteSpace=wrap;html=1;fontSize=16;fontFamily=monospace;align=left;spacingLeft=10;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="480" y="500" width="320" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Vertical arrows down the programming-model column -->
+        <mxCell id="a1" value="contains many thread blocks" style="endArrow=block;html=1;fontSize=13;fontFamily=monospace;rounded=0;" edge="1" parent="1" source="kernel" target="block">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" value="divided into warps" style="endArrow=block;html=1;fontSize=13;fontFamily=monospace;rounded=0;" edge="1" parent="1" source="block" target="warp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" value="instruction issued" style="endArrow=block;html=1;fontSize=13;fontFamily=monospace;rounded=0;" edge="1" parent="1" source="warp" target="threads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Horizontal mapping arrows -->
+        <mxCell id="m1" style="endArrow=open;html=1;rounded=0;" edge="1" parent="1" source="block" target="hwBlock">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m2" style="endArrow=open;html=1;rounded=0;" edge="1" parent="1" source="warp" target="hwWarp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m3" style="endArrow=open;html=1;rounded=0;" edge="1" parent="1" source="threads" target="hwThreads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
