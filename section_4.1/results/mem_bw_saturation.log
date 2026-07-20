@@ -1,0 +1,153 @@
+@CONFIG exp=membw_sat num_tb=8
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (8, 768) - copying 4096.000000 MB
+Alone time is 2947.27 ms
+Alone time is 2951.32 ms
+Alone time is 2952.19 ms
+Alone time is 2950.23 ms
+Alone time is 2944.81 ms
+Alone time is 2947.94 ms
+Alone time is 2947.34 ms
+Alone time is 2948.03 ms
+Alone time is 2953.58 ms
+Alone time is 2947.57 ms
+Avg alone time is 2947.98 ms
+Average achieved bandwidth is 135.686 GB/S
+@CONFIG exp=membw_sat num_tb=16
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (16, 768) - copying 4096.000000 MB
+Alone time is 1527.03 ms
+Alone time is 1525.29 ms
+Alone time is 1527.03 ms
+Alone time is 1526.17 ms
+Alone time is 1525.21 ms
+Alone time is 1527.08 ms
+Alone time is 1526.18 ms
+Alone time is 1524.67 ms
+Alone time is 1526.8 ms
+Alone time is 1527.37 ms
+Avg alone time is 1526.49 ms
+Average achieved bandwidth is 262.039 GB/S
+@CONFIG exp=membw_sat num_tb=32
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (32, 768) - copying 4096.000000 MB
+Alone time is 823.496 ms
+Alone time is 820.672 ms
+Alone time is 821.257 ms
+Alone time is 820.985 ms
+Alone time is 821.281 ms
+Alone time is 820.82 ms
+Alone time is 820.962 ms
+Alone time is 820.816 ms
+Alone time is 820.685 ms
+Alone time is 820.878 ms
+Avg alone time is 820.92 ms
+Average achieved bandwidth is 487.258 GB/S
+@CONFIG exp=membw_sat num_tb=64
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (64, 768) - copying 4096.000000 MB
+Alone time is 463.907 ms
+Alone time is 462.362 ms
+Alone time is 462.002 ms
+Alone time is 462.359 ms
+Alone time is 462.266 ms
+Alone time is 462.442 ms
+Alone time is 462.225 ms
+Alone time is 462.343 ms
+Alone time is 462.323 ms
+Alone time is 462.389 ms
+Avg alone time is 462.351 ms
+Average achieved bandwidth is 865.144 GB/S
+@CONFIG exp=membw_sat num_tb=85
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (85, 768) - copying 4096.000000 MB
+Alone time is 375.181 ms
+Alone time is 374.644 ms
+Alone time is 374.729 ms
+Alone time is 374.786 ms
+Alone time is 374.347 ms
+Alone time is 374.528 ms
+Alone time is 374.762 ms
+Alone time is 374.776 ms
+Alone time is 374.831 ms
+Alone time is 374.649 ms
+Avg alone time is 374.746 ms
+Average achieved bandwidth is 1067.39 GB/S
+@CONFIG exp=membw_sat num_tb=128
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (128, 768) - copying 4096.000000 MB
+Alone time is 348.395 ms
+Alone time is 348.34 ms
+Alone time is 348.212 ms
+Alone time is 348.087 ms
+Alone time is 348.324 ms
+Alone time is 348.619 ms
+Alone time is 348.151 ms
+Alone time is 348.388 ms
+Alone time is 348.943 ms
+Alone time is 348.101 ms
+Avg alone time is 348.332 ms
+Average achieved bandwidth is 1148.33 GB/S
+@CONFIG exp=membw_sat num_tb=170
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (170, 768) - copying 4096.000000 MB
+Alone time is 338.584 ms
+Alone time is 339.213 ms
+Alone time is 338.48 ms
+Alone time is 338.811 ms
+Alone time is 338.3 ms
+Alone time is 338.149 ms
+Alone time is 338.436 ms
+Alone time is 338.372 ms
+Alone time is 339.135 ms
+Alone time is 338.898 ms
+Avg alone time is 338.532 ms
+Average achieved bandwidth is 1181.57 GB/S
+@CONFIG exp=membw_sat num_tb=255
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (255, 768) - copying 4096.000000 MB
+Alone time is 341.365 ms
+Alone time is 341.246 ms
+Alone time is 341.274 ms
+Alone time is 341.134 ms
+Alone time is 341.169 ms
+Alone time is 341.092 ms
+Alone time is 341.208 ms
+Alone time is 341.201 ms
+Alone time is 341.161 ms
+Alone time is 341.514 ms
+Avg alone time is 341.204 ms
+Average achieved bandwidth is 1172.32 GB/S
+@CONFIG exp=membw_sat num_tb=340
+----------------------------------------
+Number of visible SMs: 170
+----------------------------------------
+Running copy kernel alone - Launch Config: (340, 768) - copying 4096.000000 MB
+Alone time is 332.844 ms
+Alone time is 332.784 ms
+Alone time is 332.055 ms
+Alone time is 332.285 ms
+Alone time is 332.233 ms
+Alone time is 332.413 ms
+Alone time is 332.288 ms
+Alone time is 332.39 ms
+Alone time is 332.75 ms
+Alone time is 332.153 ms
+Avg alone time is 332.339 ms
+Average achieved bandwidth is 1203.59 GB/S

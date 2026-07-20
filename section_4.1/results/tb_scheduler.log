@@ -1,0 +1,84 @@
+@CONFIG exp=tb blocks_per_sm=1 num_tb=170 mode=1
+----------------------------------------
+Running sleep kernel alone - Launch Config: (170, 768)
+Alone time is 102.506 ms
+Alone time is 102.403 ms
+Alone time is 102.403 ms
+Alone time is 102.403 ms
+Alone time is 102.402 ms
+Alone time is 102.402 ms
+Alone time is 102.403 ms
+Alone time is 102.402 ms
+Alone time is 102.617 ms
+Alone time is 102.403 ms
+Avg alone time is 102.403 ms
+@CONFIG exp=tb blocks_per_sm=1 num_tb=170 mode=2
+----------------------------------------
+Running two sleep kernels sequentially - Launch Config: (170, 768)
+Sequential time is 204.887 ms
+Sequential time is 204.805 ms
+Sequential time is 204.803 ms
+Sequential time is 204.803 ms
+Sequential time is 204.803 ms
+Sequential time is 204.806 ms
+Sequential time is 204.804 ms
+Sequential time is 204.809 ms
+Sequential time is 204.807 ms
+Sequential time is 204.808 ms
+Avg sequential time is 204.806 ms
+@CONFIG exp=tb blocks_per_sm=1 num_tb=170 mode=3
+----------------------------------------
+Running two sleep kernels colocated using CUDA streams - Launch Config: (170, 768)
+Colocated time is 102.411 ms
+Colocated time is 102.409 ms
+Colocated time is 102.407 ms
+Colocated time is 102.407 ms
+Colocated time is 102.411 ms
+Colocated time is 102.41 ms
+Colocated time is 102.409 ms
+Colocated time is 102.408 ms
+Colocated time is 102.409 ms
+Colocated time is 102.408 ms
+Avg colocated time is 102.409 ms
+@CONFIG exp=tb blocks_per_sm=2 num_tb=340 mode=1
+----------------------------------------
+Running sleep kernel alone - Launch Config: (340, 768)
+Alone time is 102.508 ms
+Alone time is 102.412 ms
+Alone time is 102.403 ms
+Alone time is 102.408 ms
+Alone time is 102.402 ms
+Alone time is 102.403 ms
+Alone time is 102.402 ms
+Alone time is 102.402 ms
+Alone time is 102.402 ms
+Alone time is 102.403 ms
+Avg alone time is 102.403 ms
+@CONFIG exp=tb blocks_per_sm=2 num_tb=340 mode=2
+----------------------------------------
+Running two sleep kernels sequentially - Launch Config: (340, 768)
+Sequential time is 204.893 ms
+Sequential time is 204.811 ms
+Sequential time is 204.81 ms
+Sequential time is 204.804 ms
+Sequential time is 204.804 ms
+Sequential time is 204.804 ms
+Sequential time is 204.804 ms
+Sequential time is 204.804 ms
+Sequential time is 204.804 ms
+Sequential time is 204.802 ms
+Avg sequential time is 204.804 ms
+@CONFIG exp=tb blocks_per_sm=2 num_tb=340 mode=3
+----------------------------------------
+Running two sleep kernels colocated using CUDA streams - Launch Config: (340, 768)
+Colocated time is 204.81 ms
+Colocated time is 204.802 ms
+Colocated time is 204.809 ms
+Colocated time is 204.801 ms
+Colocated time is 204.808 ms
+Colocated time is 204.81 ms
+Colocated time is 204.804 ms
+Colocated time is 204.807 ms
+Colocated time is 204.805 ms
+Colocated time is 204.811 ms
+Avg colocated time is 204.807 ms

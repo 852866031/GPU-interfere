@@ -1,0 +1,53 @@
+@CONFIG exp=membw_mps case=alone_half
+----------------------------------------
+Number of visible SMs: 84
+----------------------------------------
+Running copy kernel alone - Launch Config: (170, 768) - copying 4096.000000 MB
+Alone time is 422.065 ms
+Alone time is 422.609 ms
+Alone time is 425.959 ms
+Alone time is 426.872 ms
+Alone time is 426.432 ms
+Alone time is 425.036 ms
+Alone time is 422.191 ms
+Alone time is 426.723 ms
+Alone time is 422.335 ms
+Alone time is 426.501 ms
+Avg alone time is 425.498 ms
+Average achieved bandwidth is 940.076 GB/S
+@CONFIG exp=membw_mps case=colocated_half instance=1
+@CONFIG exp=membw_mps case=colocated_half instance=2
+--- instance 1 ---
+----------------------------------------
+Number of visible SMs: 84
+----------------------------------------
+Running copy kernel alone - Launch Config: (170, 768) - copying 4096.000000 MB
+Alone time is 762.92 ms
+Alone time is 745.275 ms
+Alone time is 719.418 ms
+Alone time is 710.433 ms
+Alone time is 696.108 ms
+Alone time is 692.385 ms
+Alone time is 674.748 ms
+Alone time is 652.05 ms
+Alone time is 632.852 ms
+Alone time is 675.549 ms
+Avg alone time is 694.246 ms
+Average achieved bandwidth is 576.164 GB/S
+--- instance 2 ---
+----------------------------------------
+Number of visible SMs: 84
+----------------------------------------
+Running copy kernel alone - Launch Config: (170, 768) - copying 4096.000000 MB
+Alone time is 816.903 ms
+Alone time is 794.155 ms
+Alone time is 753.075 ms
+Alone time is 736.082 ms
+Alone time is 710.259 ms
+Alone time is 725.026 ms
+Alone time is 707.102 ms
+Alone time is 708.435 ms
+Alone time is 712.95 ms
+Alone time is 432.012 ms
+Avg alone time is 718.988 ms
+Average achieved bandwidth is 556.337 GB/S

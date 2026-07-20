@@ -4,8 +4,8 @@ project(gpu_util_benchmarks LANGUAGES CXX CUDA)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED True)
 
-# Set CUDA architectures, 86 for RTX 3090, 90 for H100
-set(CMAKE_CUDA_ARCHITECTURES 90)
+# Set CUDA architectures, 86 for RTX 3090, 90 for H100, 120 for RTX 5090 (Blackwell)
+set(CMAKE_CUDA_ARCHITECTURES 120)
 
 find_package(CUDA REQUIRED)
 

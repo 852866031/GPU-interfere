@@ -1,0 +1,56 @@
+@CONFIG exp=ipc case=copy_alone
+------------------------------------
+Running copy kernel alone - Launch Config Copy: (170, 512)
+Alone time is 193.151 ms
+Alone time is 200.741 ms
+Alone time is 198.708 ms
+Alone time is 199.145 ms
+Alone time is 196.547 ms
+Alone time is 198.236 ms
+Alone time is 206.709 ms
+Alone time is 194.638 ms
+Alone time is 207.058 ms
+Alone time is 194.448 ms
+Avg alone time is 198.472 ms
+@CONFIG exp=ipc case=compute_alone
+------------------------------------
+Running compute kernel with ILP 4 alone - Launch Config Compute: (170, 128)
+Alone time is 220.249 ms
+Alone time is 214.735 ms
+Alone time is 204.774 ms
+Alone time is 202.887 ms
+Alone time is 202.896 ms
+Alone time is 202.894 ms
+Alone time is 202.911 ms
+Alone time is 202.91 ms
+Alone time is 202.908 ms
+Alone time is 202.897 ms
+Avg alone time is 202.909 ms
+@CONFIG exp=ipc case=sequential
+------------------------------------
+Running copy and compute with ILP 4 sequentially - Launch Config Copy: (170, 512) Launch Config Compute: (170, 128)
+Sequential time is 409.958 ms
+Sequential time is 397.921 ms
+Sequential time is 396.921 ms
+Sequential time is 400.456 ms
+Sequential time is 396.978 ms
+Sequential time is 392.447 ms
+Sequential time is 394.477 ms
+Sequential time is 392.202 ms
+Sequential time is 396.569 ms
+Sequential time is 395.532 ms
+Avg sequential time is 396.745 ms
+@CONFIG exp=ipc case=colocated
+------------------------------------
+Running copy and compute with ILP 4 colocated - Launch Config Copy: (170, 512) Launch Config Compute: (170, 128)
+Colocated time is 282.622 ms
+Colocated time is 279.919 ms
+Colocated time is 279.873 ms
+Colocated time is 281.035 ms
+Colocated time is 279.707 ms
+Colocated time is 280.094 ms
+Colocated time is 280.796 ms
+Colocated time is 280.399 ms
+Colocated time is 280.764 ms
+Colocated time is 280.736 ms
+Avg colocated time is 280.567 ms

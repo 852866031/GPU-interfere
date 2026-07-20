@@ -1,0 +1,168 @@
+@CONFIG exp=pipe ilp=1 mode=alone
+------------------------------------
+Running compute kernel with ILP 1 alone - Launch Config: (170, 128)
+Alone time is 59.1177 ms
+Alone time is 59.0211 ms
+Alone time is 59.0238 ms
+Alone time is 59.0095 ms
+Alone time is 59.0211 ms
+Alone time is 59.0117 ms
+Alone time is 56.2266 ms
+Alone time is 55.9163 ms
+Alone time is 55.9131 ms
+Alone time is 55.1424 ms
+Avg alone time is 59.0106 ms
+@CONFIG exp=pipe ilp=1 mode=sequential
+------------------------------------
+Running two compute kernel with ILP 1 sequentially - Launch Config: (170, 128)
+Sequential time is 113.838 ms
+Sequential time is 118.029 ms
+Sequential time is 112.35 ms
+Sequential time is 111.225 ms
+Sequential time is 107.06 ms
+Sequential time is 107.06 ms
+Sequential time is 107.04 ms
+Sequential time is 107.051 ms
+Sequential time is 107.059 ms
+Sequential time is 107.05 ms
+Avg sequential time is 107.06 ms
+@CONFIG exp=pipe ilp=1 mode=colocated
+------------------------------------
+Running two compute kernel with ILP 1 colocated - Launch Config: (170, 128)
+Colocated time is 116.235 ms
+Colocated time is 112.087 ms
+Colocated time is 109.484 ms
+Colocated time is 107.065 ms
+Colocated time is 107.073 ms
+Colocated time is 107.042 ms
+Colocated time is 107.045 ms
+Colocated time is 107.052 ms
+Colocated time is 107.056 ms
+Colocated time is 107.053 ms
+Avg colocated time is 107.06 ms
+@CONFIG exp=pipe ilp=2 mode=alone
+------------------------------------
+Running compute kernel with ILP 2 alone - Launch Config: (170, 128)
+Alone time is 112.96 ms
+Alone time is 118.009 ms
+Alone time is 112.832 ms
+Alone time is 111.587 ms
+Alone time is 107.078 ms
+Alone time is 107.074 ms
+Alone time is 107.069 ms
+Alone time is 107.059 ms
+Alone time is 107.229 ms
+Alone time is 107.055 ms
+Avg alone time is 107.154 ms
+@CONFIG exp=pipe ilp=2 mode=sequential
+------------------------------------
+Running two compute kernel with ILP 2 sequentially - Launch Config: (170, 128)
+Sequential time is 233.664 ms
+Sequential time is 221.075 ms
+Sequential time is 214.142 ms
+Sequential time is 214.138 ms
+Sequential time is 214.128 ms
+Sequential time is 214.122 ms
+Sequential time is 214.137 ms
+Sequential time is 214.136 ms
+Sequential time is 214.098 ms
+Sequential time is 214.115 ms
+Avg sequential time is 214.137 ms
+@CONFIG exp=pipe ilp=2 mode=colocated
+------------------------------------
+Running two compute kernel with ILP 2 colocated - Launch Config: (170, 128)
+Colocated time is 226.449 ms
+Colocated time is 215.274 ms
+Colocated time is 214.147 ms
+Colocated time is 214.141 ms
+Colocated time is 214.137 ms
+Colocated time is 214.15 ms
+Colocated time is 214.144 ms
+Colocated time is 214.162 ms
+Colocated time is 214.156 ms
+Colocated time is 214.161 ms
+Avg colocated time is 214.153 ms
+@CONFIG exp=pipe ilp=3 mode=alone
+------------------------------------
+Running compute kernel with ILP 3 alone - Launch Config: (170, 128)
+Alone time is 177.108 ms
+Alone time is 176.795 ms
+Alone time is 167.724 ms
+Alone time is 161.809 ms
+Alone time is 160.609 ms
+Alone time is 160.588 ms
+Alone time is 160.597 ms
+Alone time is 160.576 ms
+Alone time is 160.561 ms
+Alone time is 160.567 ms
+Avg alone time is 160.603 ms
+@CONFIG exp=pipe ilp=3 mode=sequential
+------------------------------------
+Running two compute kernel with ILP 3 sequentially - Launch Config: (170, 128)
+Sequential time is 353.941 ms
+Sequential time is 328.783 ms
+Sequential time is 321.218 ms
+Sequential time is 321.188 ms
+Sequential time is 321.172 ms
+Sequential time is 321.187 ms
+Sequential time is 321.171 ms
+Sequential time is 321.171 ms
+Sequential time is 321.167 ms
+Sequential time is 321.17 ms
+Avg sequential time is 321.18 ms
+@CONFIG exp=pipe ilp=3 mode=colocated
+------------------------------------
+Running two compute kernel with ILP 3 colocated - Launch Config: (170, 128)
+Colocated time is 328.855 ms
+Colocated time is 321.192 ms
+Colocated time is 321.2 ms
+Colocated time is 321.175 ms
+Colocated time is 321.161 ms
+Colocated time is 321.167 ms
+Colocated time is 321.134 ms
+Colocated time is 321.155 ms
+Colocated time is 321.192 ms
+Colocated time is 321.203 ms
+Avg colocated time is 321.183 ms
+@CONFIG exp=pipe ilp=4 mode=alone
+------------------------------------
+Running compute kernel with ILP 4 alone - Launch Config: (170, 128)
+Alone time is 232.772 ms
+Alone time is 222.098 ms
+Alone time is 214.118 ms
+Alone time is 214.117 ms
+Alone time is 214.122 ms
+Alone time is 214.116 ms
+Alone time is 214.123 ms
+Alone time is 214.126 ms
+Alone time is 214.122 ms
+Alone time is 214.131 ms
+Avg alone time is 214.123 ms
+@CONFIG exp=pipe ilp=4 mode=sequential
+------------------------------------
+Running two compute kernel with ILP 4 sequentially - Launch Config: (170, 128)
+Sequential time is 463.63 ms
+Sequential time is 430.497 ms
+Sequential time is 428.236 ms
+Sequential time is 428.24 ms
+Sequential time is 428.267 ms
+Sequential time is 428.25 ms
+Sequential time is 428.252 ms
+Sequential time is 428.214 ms
+Sequential time is 428.236 ms
+Sequential time is 428.256 ms
+Avg sequential time is 428.251 ms
+@CONFIG exp=pipe ilp=4 mode=colocated
+------------------------------------
+Running two compute kernel with ILP 4 colocated - Launch Config: (170, 128)
+Colocated time is 428.49 ms
+Colocated time is 428.26 ms
+Colocated time is 428.247 ms
+Colocated time is 428.246 ms
+Colocated time is 428.276 ms
+Colocated time is 428.248 ms
+Colocated time is 428.272 ms
+Colocated time is 428.26 ms
+Colocated time is 428.272 ms
+Colocated time is 428.292 ms
+Avg colocated time is 428.266 ms

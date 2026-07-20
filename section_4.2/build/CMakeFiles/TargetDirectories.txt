@@ -1,0 +1,6 @@
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/gpu_util_bench.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/l1_cache.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/ipc.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/pipelines.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/edit_cache.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.2/build/CMakeFiles/rebuild_cache.dir

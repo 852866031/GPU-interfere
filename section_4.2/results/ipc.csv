@@ -1,0 +1,6 @@
+case,latency_ms
+copy_alone,198.472
+compute_alone,202.909
+sequential,396.745
+colocated,280.567
+interference_pct_toward_serial,40.1

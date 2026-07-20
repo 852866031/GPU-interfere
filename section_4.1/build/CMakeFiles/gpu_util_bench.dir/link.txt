@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgpu_util_bench.a CMakeFiles/gpu_util_bench.dir/gpu_util_bench_lib/kernels.cu.o
+/usr/bin/ranlib libgpu_util_bench.a

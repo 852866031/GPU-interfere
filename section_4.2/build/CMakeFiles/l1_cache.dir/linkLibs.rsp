@@ -1,0 +1,1 @@
+ libgpu_util_bench.a -lnvidia-ml -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

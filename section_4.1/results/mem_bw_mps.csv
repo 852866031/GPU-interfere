@@ -1,0 +1,5 @@
+case,bw_GBs,latency_ms
+alone_half,940.076,425.498
+colocated_inst1,576.164,694.246
+colocated_inst2,556.337,718.988
+colocated_aggregate,1132.501,718.988

@@ -1,0 +1,6 @@
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/gpu_util_bench.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/tb_scheduler.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/l2_cache.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/mem_bw.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/edit_cache.dir
+/home/jiaxuan/Documents/Projects/gpu-interfere/section_4.1/build/CMakeFiles/rebuild_cache.dir

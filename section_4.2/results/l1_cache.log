@@ -1,0 +1,336 @@
+@CONFIG exp=l1 size_kb=4 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 4 KB per thread block
+Alone time is 6.60704 ms
+Alone time is 6.59318 ms
+Alone time is 6.59629 ms
+Alone time is 6.58762 ms
+Alone time is 6.58941 ms
+Alone time is 6.59056 ms
+Alone time is 6.5856 ms
+Alone time is 6.58797 ms
+Alone time is 6.58742 ms
+Alone time is 6.58787 ms
+Avg alone time is 6.58869 ms
+@CONFIG exp=l1 size_kb=4 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 4 KB per thread block
+Colocated time is 6.61754 ms
+Colocated time is 6.62547 ms
+Colocated time is 6.62435 ms
+Colocated time is 6.62323 ms
+Colocated time is 6.62032 ms
+Colocated time is 6.70874 ms
+Colocated time is 6.62102 ms
+Colocated time is 6.62128 ms
+Colocated time is 6.62064 ms
+Colocated time is 6.60669 ms
+Avg colocated time is 6.62115 ms
+@CONFIG exp=l1 size_kb=8 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 8 KB per thread block
+Alone time is 12.7338 ms
+Alone time is 12.7185 ms
+Alone time is 12.71 ms
+Alone time is 12.714 ms
+Alone time is 12.718 ms
+Alone time is 12.7222 ms
+Alone time is 12.709 ms
+Alone time is 12.717 ms
+Alone time is 12.723 ms
+Alone time is 12.7061 ms
+Avg alone time is 12.7175 ms
+@CONFIG exp=l1 size_kb=8 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 8 KB per thread block
+Colocated time is 12.76 ms
+Colocated time is 12.7468 ms
+Colocated time is 12.7414 ms
+Colocated time is 12.8564 ms
+Colocated time is 12.7985 ms
+Colocated time is 12.7417 ms
+Colocated time is 12.8003 ms
+Colocated time is 12.7761 ms
+Colocated time is 13.0339 ms
+Colocated time is 12.7536 ms
+Avg colocated time is 12.768 ms
+@CONFIG exp=l1 size_kb=12 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 12 KB per thread block
+Alone time is 18.8734 ms
+Alone time is 18.8383 ms
+Alone time is 18.8375 ms
+Alone time is 18.8341 ms
+Alone time is 18.8365 ms
+Alone time is 18.8339 ms
+Alone time is 18.8314 ms
+Alone time is 18.8518 ms
+Alone time is 18.8485 ms
+Alone time is 18.8442 ms
+Avg alone time is 18.8379 ms
+@CONFIG exp=l1 size_kb=12 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 12 KB per thread block
+Colocated time is 18.8682 ms
+Colocated time is 18.895 ms
+Colocated time is 18.8808 ms
+Colocated time is 18.8821 ms
+Colocated time is 18.9229 ms
+Colocated time is 18.8885 ms
+Colocated time is 18.952 ms
+Colocated time is 18.8943 ms
+Colocated time is 18.8968 ms
+Colocated time is 18.8869 ms
+Avg colocated time is 18.8914 ms
+@CONFIG exp=l1 size_kb=16 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 16 KB per thread block
+Alone time is 24.997 ms
+Alone time is 24.9829 ms
+Alone time is 24.9763 ms
+Alone time is 24.9694 ms
+Alone time is 24.962 ms
+Alone time is 24.9622 ms
+Alone time is 24.9725 ms
+Alone time is 24.9722 ms
+Alone time is 24.9892 ms
+Alone time is 24.9559 ms
+Avg alone time is 24.9724 ms
+@CONFIG exp=l1 size_kb=16 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 16 KB per thread block
+Colocated time is 25.1924 ms
+Colocated time is 25.0287 ms
+Colocated time is 25.0203 ms
+Colocated time is 25.035 ms
+Colocated time is 25.0283 ms
+Colocated time is 25.0259 ms
+Colocated time is 25.6085 ms
+Colocated time is 25.0202 ms
+Colocated time is 25.0396 ms
+Colocated time is 25.0569 ms
+Avg colocated time is 25.0319 ms
+@CONFIG exp=l1 size_kb=20 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 20 KB per thread block
+Alone time is 31.1287 ms
+Alone time is 31.099 ms
+Alone time is 31.093 ms
+Alone time is 31.0921 ms
+Alone time is 31.095 ms
+Alone time is 31.1113 ms
+Alone time is 31.0805 ms
+Alone time is 31.0926 ms
+Alone time is 31.0875 ms
+Alone time is 30.5182 ms
+Avg alone time is 31.0928 ms
+@CONFIG exp=l1 size_kb=20 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 20 KB per thread block
+Colocated time is 31.1956 ms
+Colocated time is 31.1775 ms
+Colocated time is 31.1658 ms
+Colocated time is 31.1892 ms
+Colocated time is 31.186 ms
+Colocated time is 31.3287 ms
+Colocated time is 32.4339 ms
+Colocated time is 32.9603 ms
+Colocated time is 32.8655 ms
+Colocated time is 32.9356 ms
+Avg colocated time is 31.2621 ms
+@CONFIG exp=l1 size_kb=24 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 24 KB per thread block
+Alone time is 37.2591 ms
+Alone time is 37.2341 ms
+Alone time is 37.2132 ms
+Alone time is 37.2122 ms
+Alone time is 37.2194 ms
+Alone time is 37.2151 ms
+Alone time is 37.2161 ms
+Alone time is 37.2082 ms
+Alone time is 36.5947 ms
+Alone time is 35.1988 ms
+Avg alone time is 37.2142 ms
+@CONFIG exp=l1 size_kb=24 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 24 KB per thread block
+Colocated time is 71.4464 ms
+Colocated time is 70.3935 ms
+Colocated time is 68.4512 ms
+Colocated time is 68.4304 ms
+Colocated time is 67.2682 ms
+Colocated time is 65.3249 ms
+Colocated time is 65.4907 ms
+Colocated time is 65.45 ms
+Colocated time is 65.336 ms
+Colocated time is 65.3556 ms
+Avg colocated time is 66.3794 ms
+@CONFIG exp=l1 size_kb=28 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 28 KB per thread block
+Alone time is 43.3823 ms
+Alone time is 43.3564 ms
+Alone time is 43.352 ms
+Alone time is 43.3511 ms
+Alone time is 43.3553 ms
+Alone time is 43.3611 ms
+Alone time is 43.2311 ms
+Alone time is 40.9926 ms
+Alone time is 40.9942 ms
+Alone time is 40.9818 ms
+Avg alone time is 43.3515 ms
+@CONFIG exp=l1 size_kb=28 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 28 KB per thread block
+Colocated time is 87.862 ms
+Colocated time is 87.945 ms
+Colocated time is 86.2019 ms
+Colocated time is 83.5589 ms
+Colocated time is 83.5726 ms
+Colocated time is 80.6382 ms
+Colocated time is 80.7265 ms
+Colocated time is 81.0528 ms
+Colocated time is 81.1033 ms
+Colocated time is 80.9847 ms
+Avg colocated time is 82.3311 ms
+@CONFIG exp=l1 size_kb=32 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 32 KB per thread block
+Alone time is 44.8843 ms
+Alone time is 49.4858 ms
+Alone time is 49.483 ms
+Alone time is 49.4937 ms
+Alone time is 49.4764 ms
+Alone time is 47.0599 ms
+Alone time is 46.9219 ms
+Alone time is 46.9217 ms
+Alone time is 46.9219 ms
+Alone time is 45.5302 ms
+Avg alone time is 46.9909 ms
+@CONFIG exp=l1 size_kb=32 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 32 KB per thread block
+Colocated time is 133.344 ms
+Colocated time is 253.385 ms
+Colocated time is 276.034 ms
+Colocated time is 135.379 ms
+Colocated time is 133.918 ms
+Colocated time is 271.397 ms
+Colocated time is 254.308 ms
+Colocated time is 246.639 ms
+Colocated time is 136.24 ms
+Colocated time is 280.477 ms
+Avg colocated time is 250.012 ms
+@CONFIG exp=l1 size_kb=40 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 40 KB per thread block
+Alone time is 56.1136 ms
+Alone time is 61.7609 ms
+Alone time is 61.7421 ms
+Alone time is 61.7664 ms
+Alone time is 59.3368 ms
+Alone time is 58.544 ms
+Alone time is 58.5414 ms
+Alone time is 57.6913 ms
+Alone time is 56.0128 ms
+Alone time is 56.0054 ms
+Avg alone time is 58.5427 ms
+@CONFIG exp=l1 size_kb=40 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 40 KB per thread block
+Colocated time is 357.354 ms
+Colocated time is 354.103 ms
+Colocated time is 354.338 ms
+Colocated time is 354.107 ms
+Colocated time is 354.128 ms
+Colocated time is 354.157 ms
+Colocated time is 354.118 ms
+Colocated time is 354.165 ms
+Colocated time is 354.187 ms
+Colocated time is 354.052 ms
+Avg colocated time is 354.143 ms
+@CONFIG exp=l1 size_kb=48 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 48 KB per thread block
+Alone time is 142.076 ms
+Alone time is 142.824 ms
+Alone time is 138.545 ms
+Alone time is 134.516 ms
+Alone time is 134.142 ms
+Alone time is 133.989 ms
+Alone time is 133.972 ms
+Alone time is 134.113 ms
+Alone time is 134.047 ms
+Alone time is 133.925 ms
+Avg alone time is 134.127 ms
+@CONFIG exp=l1 size_kb=48 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 48 KB per thread block
+Colocated time is 425.843 ms
+Colocated time is 424.221 ms
+Colocated time is 424.232 ms
+Colocated time is 424.218 ms
+Colocated time is 424.063 ms
+Colocated time is 424.379 ms
+Colocated time is 424.161 ms
+Colocated time is 424.085 ms
+Colocated time is 424.158 ms
+Colocated time is 424.175 ms
+Avg colocated time is 424.197 ms
+@CONFIG exp=l1 size_kb=56 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 56 KB per thread block
+Alone time is 189.734 ms
+Alone time is 161.138 ms
+Alone time is 155.57 ms
+Alone time is 150.828 ms
+Alone time is 151.093 ms
+Alone time is 151.354 ms
+Alone time is 151.357 ms
+Alone time is 151.615 ms
+Alone time is 151.359 ms
+Alone time is 151.321 ms
+Avg alone time is 151.358 ms
+@CONFIG exp=l1 size_kb=56 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 56 KB per thread block
+Colocated time is 495.039 ms
+Colocated time is 494.876 ms
+Colocated time is 495.442 ms
+Colocated time is 495.416 ms
+Colocated time is 495.353 ms
+Colocated time is 495.391 ms
+Colocated time is 495.549 ms
+Colocated time is 495.388 ms
+Colocated time is 495.411 ms
+Colocated time is 495.393 ms
+Avg colocated time is 495.392 ms
+@CONFIG exp=l1 size_kb=64 mode=alone
+------------------------------------
+Running copy kernel alone - Launch Config: (170, 64) - copying 64 KB per thread block
+Alone time is 587.262 ms
+Alone time is 564.401 ms
+Alone time is 564.758 ms
+Alone time is 564.376 ms
+Alone time is 564.775 ms
+Alone time is 564.807 ms
+Alone time is 564.852 ms
+Alone time is 564.813 ms
+Alone time is 508.168 ms
+Alone time is 564.902 ms
+Avg alone time is 564.791 ms
+@CONFIG exp=l1 size_kb=64 mode=colocated
+------------------------------------
+Running two copy kernels colocated - Launch Config: (170, 64) - copying 64 KB per thread block
+Colocated time is 566.756 ms
+Colocated time is 566.872 ms
+Colocated time is 566.96 ms
+Colocated time is 566.889 ms
+Colocated time is 566.913 ms
+Colocated time is 566.837 ms
+Colocated time is 566.856 ms
+Colocated time is 566.892 ms
+Colocated time is 566.809 ms
+Colocated time is 566.944 ms
+Avg colocated time is 566.88 ms

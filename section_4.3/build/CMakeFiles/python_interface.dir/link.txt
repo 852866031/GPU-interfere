@@ -1,0 +1,1 @@
+/usr/bin/g++ -fPIC -shared -Wl,-soname,libpython_interface.so -o libpython_interface.so @CMakeFiles/python_interface.dir/objects1.rsp @CMakeFiles/python_interface.dir/linkLibs.rsp -L"/usr/local/cuda-12.8/targets/x86_64-linux/lib/stubs" -L"/usr/local/cuda-12.8/targets/x86_64-linux/lib"
