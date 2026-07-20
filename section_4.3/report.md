@@ -11,7 +11,7 @@ Sections 4.1 and 4.2 used synthetic micro-kernels to isolate *individual* shared
 
 The setup is a concrete instance of GPU sharing that happens all the time in practice: two jobs are packed onto one GPU to raise utilization. Here one "job" is a PyTorch matmul running in a loop (standing in for an inference or training kernel); the other is a compute-heavy CUDA kernel (standing in for a co-tenant). They run **concurrently on the same GPU** via separate CUDA streams, launched from separate Python threads.
 
-**What this shows.** The matmul and the competitor both lean on the **FP32 fused-multiply-add (FMA) pipeline** and the **warp schedulers** inside each SM (§4.2's resources). So when they are colocated, the matmul slows down — and, crucially, *how much* depends on the matmul's **size**: an operation that already saturates the GPU barely notices, while a smaller one that leaves the FMA pipeline partly idle gets badly hurt. A single "GPU is busy" number cannot predict this.
+**What this shows.** The matmul and the competitor both lean on the **FP32 fused-multiply-add (FMA) pipeline** and the **warp schedulers** inside each SM (§4.2's resources). So when they are colocated, the matmul slows down — and, crucially, *how much* depends on the matmul's **size**: a large matmul launches enough thread blocks to *flood* the GPU and dominate the shared pipeline, so it barely notices the competitor, while a small-to-medium matmul *under-fills* the GPU and must split the pipeline with it, so it gets badly hurt. A single "GPU is busy" number cannot predict this.
 
 **Method.** For each square matrix size we measure the matmul's latency (median over 101 runs) **alone**, then **colocated** with the competitor kernel, and report the slowdown. The competitor is sized to run continuously for the whole matmul loop, so the matmul is genuinely under contention the entire time it is measured.
 
@@ -68,17 +68,32 @@ We swept square matmuls from 256³ to 4096³.
 
 **The interference is real, and it is large.** A common-case FP32 matmul (512³) runs **5.6× slower** simply because a compute kernel is sharing the GPU — even though both would report "100% utilization" on their own. This is the paper's headline applied to a production kernel: colocation that looks safe by coarse metrics can be very unsafe.
 
-**Why the slowdown is non-monotonic in size — the key insight.** The curve is not "bigger = worse"; it peaks in the middle:
+**What each kernel actually uses (measured with NCU).** The matmul and the competitor both compete for the **FP32 FMA pipeline**, so the two things that matter are (a) how many thread blocks the matmul launches versus the competitor's 170 — which decides whether it *dominates* or must *share* the pipeline — and (b) how much of the FMA pipe the matmul itself uses — which decides whether it even *cares*.
 
-- **Small (256³):** the matmul is so tiny (a handful of thread blocks, microseconds long) that it barely occupies the GPU and finishes almost instantly; there is little time to overlap and the launch/queue overhead dominates, so the *relative* slowdown is modest (1.4×).
-- **Medium (512³–1024³):** the matmul is **compute/FMA-bound but does not fill the machine** — it leaves FMA-pipeline and issue-slot capacity idle on many SMs. The competitor pours FP32 FMAs into exactly that idle capacity, so the two collide hard on the shared pipeline → **4–6× slowdown**. These are precisely the small-to-medium matmuls ubiquitous in real models (attention projections, per-head GEMMs, small MLPs).
-- **Large (2048³, 4096³):** the matmul **already saturates the GPU** and, as the matrices grow, becomes increasingly **memory-bound** rather than FMA-bound. There is no idle FMA capacity for the competitor to exploit, and the matmul is no longer bottlenecked on the contended resource — so the slowdown collapses to ~1.1×.
+| Kernel | GEMM blocks | threads/block | blocks ÷ 170 SMs | FMA pipe (alone) | occupancy | **slowdown** |
+|---|---|---|---|---|---|---|
+| matmul 256³ | **64** | 256 (8 warps) | 0.4× (under-fills) | 6% | 16% | 1.4× |
+| matmul 512³ | **128** | 128 (4 warps) | 0.8× (under-fills) | 43% | 8% | **5.6×** |
+| matmul 1024³ | **256** | 128 (4 warps) | 1.5× | 57% | 14% | 4.3× |
+| matmul 2048³ | **640** | 256 (8 warps) | 3.8× | 66% | 17% | 1.1× |
+| matmul 4096³ | **1536** | 256 (8 warps) | 9.0× | 71% | 17% | 1.1× |
+| **FMA competitor** | **170** | 128 (4 warps) | 1.0× | **79%** | 8% | *(always on)* |
 
-**This is the "one level deeper" thesis, end to end.** Whether a real ML kernel suffers interference is not predictable from "is the GPU busy?" — it depends on *which* internal resource the kernel bottlenecks on (§4.2's FMA pipeline / warp scheduler) and how much of that resource it leaves on the table. The synthetic experiments in 4.1–4.2 explained the mechanism; here it plays out on `torch.mm` with a 5.6× worst case.
+(cuBLAS selects a `cutlass_..._simt_sgemm` kernel; tile/block size varies with size. Measured via [`scripts/mm_one.py`](scripts/mm_one.py).)
 
-**Practical takeaway for colocation / scheduling.** Packing a compute-bound tenant next to an ML serving kernel is safe *only* when the ML kernel already saturates the shared pipeline (large, memory-bound GEMMs). For the small-to-medium, compute-bound matmuls that dominate latency-sensitive inference, the same packing can inflate latency several-fold. A scheduler that reasons only about occupancy or `nvidia-smi` utilization cannot tell these cases apart.
+**Why the slowdown is non-monotonic in size.** The curve is not "bigger = worse"; it peaks in the middle, and the block counts above explain exactly why:
 
-**RTX 5090 vs H100 (paper).** The mechanism reproduces; the exact peak location and magnitude depend on the GPU's FMA throughput, cuBLAS kernel selection per size, and when the matmul crosses from compute- to memory-bound. Absolute numbers here are RTX 5090 / cuBLAS-for-`sm_120`; the *shape* — worst interference for mid-size, compute-bound matmuls — is the transferable result.
+- **Small (256³):** only **64 blocks** — it doesn't even fill the GPU's 170 SMs — and it uses just **6% of the FMA pipe**. It is so tiny it is launch-overhead-bound, barely touching the contended pipeline. So although the competitor's 170 blocks outnumber it, there is almost nothing to contend over → modest **1.4×**.
+- **Medium (512³–1024³):** **128–256 blocks** (512³ still *under-fills* the 170 SMs) while FMA-pipe use jumps to **43–57%**. Now the matmul is genuinely pipeline-active *and* cannot out-muscle the ever-present 170-block competitor — so they split the FMA pipeline roughly evenly and the matmul is throttled hard → **4–6×**. These are precisely the small-to-medium matmuls ubiquitous in real models (attention projections, per-head GEMMs, small MLPs).
+- **Large (2048³, 4096³):** **640–1536 blocks flood the GPU 4–9× over**, outnumbering the competitor's 170 blocks ~4:1 to 9:1. On any SM the matmul owns the large majority of FMA-pipe cycles and the competitor is a rounding error → slowdown collapses to **1.1×**. Note this is **not** because the matmul becomes memory-bound — DRAM stays at only 5–10% and its FMA use actually *rises* to 71%; it is safe purely because it **dominates the pipeline by block count**.
+
+In one line: **the peak sits where the matmul uses the FMA pipe heavily (high FMA%) but launches too few blocks to dominate it (blocks ≲ 170).** 512³ is the one bad cell — 43% FMA demand, only 128 blocks.
+
+**This is the "one level deeper" thesis, end to end.** Whether a real ML kernel suffers interference is not predictable from "is the GPU busy?" — it depends on *which* internal resource the kernel bottlenecks on (§4.2's FMA pipeline) and whether it launches enough blocks to dominate that resource. The synthetic experiments in 4.1–4.2 explained the mechanism; here it plays out on `torch.mm` with a 5.6× worst case.
+
+**Practical takeaway for colocation / scheduling.** Packing a compute-bound tenant next to an ML serving kernel is safe *only* when the ML kernel launches enough blocks to flood the GPU and dominate the shared pipeline (the large GEMMs). For the small-to-medium, compute-bound matmuls that under-fill the GPU yet dominate latency-sensitive inference, the same packing can inflate latency several-fold. A scheduler that reasons only about occupancy or `nvidia-smi` utilization — neither of which captures "blocks launched vs SMs" together with "FMA-pipe demand" — cannot tell these cases apart.
+
+**RTX 5090 vs H100 (paper).** The mechanism reproduces; the exact peak location and magnitude depend on the GPU's FMA throughput, the SM count (which sets the "enough blocks to dominate" threshold), and cuBLAS kernel/tile selection per size. Absolute numbers here are RTX 5090 / cuBLAS-for-`sm_120`; the *shape* — worst interference for mid-size, compute-bound matmuls that under-fill the GPU — is the transferable result.
 
 **Limitations.** Latencies are medians of 101 runs on an otherwise-idle GPU; `torch.mm` dispatches size-dependent cuBLAS kernels, so the curve partly reflects kernel-selection boundaries as well as interference. FP32 (not TF32/FP16 tensor-core) matmul is used, to keep the shared resource the same FP32 FMA pipeline the competitor stresses; a tensor-core matmul would contend on the tensor pipeline instead. The competitor is fixed at 170×128; a stronger or weaker competitor shifts the magnitudes but not the shape. Nsight Systems (`nsys`) traces would visually confirm the two kernels overlap on the timeline.
 
