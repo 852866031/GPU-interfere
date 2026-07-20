@@ -38,8 +38,13 @@ fig, ax = plt.subplots(figsize=(6.6, 4.2))
 ax.plot(sizes, [l1[s]["alone"] for s in sizes], "-o", color="#4C78A8", label="alone (1 kernel)")
 ax.plot(sizes, [2*l1[s]["alone"] for s in sizes], "--", color="#B0B0B0", label="2x alone (ideal serial)")
 ax.plot(sizes, [l1[s]["colocated"] for s in sizes], "-s", color="#E45756", label="colocated (2 kernels, same SM)")
-ax.axvline(L1_KB/4, color="#666", ls=":", lw=1)
-ax.text(L1_KB/4+0.7, ax.get_ylim()[1]*0.55, "combined footprint\n= 128 KB L1", fontsize=8, color="#666")
+# two cache cliffs: 2 kernels overflow L1 at 1/4 the L1 size (combined 4x footprint),
+# 1 kernel overflows it at 1/2 the L1 size (its own 2x footprint).
+ymax = ax.get_ylim()[1]
+ax.axvline(L1_KB/4, color="#E45756", ls=":", lw=1.3)
+ax.text(L1_KB/4+0.7, ymax*0.50, "2 kernels\noverflow L1\n(32 KB)", fontsize=8, color="#E45756")
+ax.axvline(L1_KB/2, color="#4C78A8", ls=":", lw=1.3)
+ax.text(L1_KB/2-0.7, ymax*0.80, "1 kernel\noverflows L1\n(64 KB)", fontsize=8, color="#4C78A8", ha="right")
 ax.set_xlabel("copy size per block (KB)"); ax.set_ylabel("latency (ms)")
 ax.set_title("4.2.1  L1 cache interference"); ax.legend(fontsize=8); fig.tight_layout()
 fig.savefig(os.path.join(FIG, "fig_421_l1_cache.png"), dpi=150); plt.close(fig)
