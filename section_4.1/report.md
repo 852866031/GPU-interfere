@@ -163,11 +163,9 @@ Because a copy kernel touches **both** an input and an output buffer, each kerne
 **How the two kernels are launched (colocated case).** Each kernel gets its **own buffers** and its **own non-blocking stream**, both launched `85 × 1024`, so they run concurrently on disjoint SMs — the only thing they share is the L2:
 
 ```text
-grid, block = 85, 1024                       # half the SMs, per kernel
-
 record(start)                                # timestamp before launch
-copy<<<grid, block, streamA>>>(inA, outA, n, itr)   # kernel A  ┐ overlap on
-copy<<<grid, block, streamB>>>(inB, outB, n, itr)   # kernel B  ┘ separate streams
+copy<<<85, 1024, streamA>>>(inA, outA, n, itr)   # kernel A  ┐ overlap on
+copy<<<85, 1024, streamB>>>(inB, outB, n, itr)   # kernel B  ┘ separate streams
 record(stop)
 synchronize(stop)                            # wait for the slower kernel to finish
 t_coloc = elapsed(start, stop)               # makespan of the pair
