@@ -160,18 +160,23 @@ Because a copy kernel touches **both** an input and an output buffer, each kerne
 | Also shared (secondary) | DRAM, once the working set spills out of L2 | |
 | Deliberately *not* shared | thread/warp slots, L1, warp scheduler (different SMs) | |
 
-**How the two kernels are launched (colocated case).** Each kernel gets its **own buffers** and its **own non-blocking stream**, both launched `85 × 1024`, so they run concurrently on disjoint SMs — the only thing they share is the L2:
+**How the kernels are launched.** Each kernel gets its **own buffers**; colocated they also get their **own non-blocking stream**, both launched `85 × 1024`, so they run concurrently on disjoint SMs — the only thing they share is the L2:
 
 ```text
-record(start)                                # timestamp before launch
+# baseline: ONE kernel alone
+record(start)
+copy<<<85, 1024>>>(inA, outA, n, itr)
+record(stop); synchronize(stop)
+t_alone = elapsed(start, stop)
+# colocated: the two kernels at once, on separate streams
+record(start)
 copy<<<85, 1024, streamA>>>(inA, outA, n, itr)   # kernel A  ┐ overlap on
 copy<<<85, 1024, streamB>>>(inB, outB, n, itr)   # kernel B  ┘ separate streams
-record(stop)
-synchronize(stop)                            # wait for the slower kernel to finish
-t_coloc = elapsed(start, stop)               # makespan of the pair
+record(stop); synchronize(stop)
+t_coloc = elapsed(start, stop)                   # makespan of the pair
 ```
 
-Compared against `t_alone` (one kernel), and swept over `num_bytes` — so any `t_coloc > t_alone` can only come from the shared L2.
+Swept over `num_bytes` and compared — so any `t_coloc > t_alone` can only come from the shared L2.
 
 ![4.1.2 L2 cache interference](figures/fig_412_l2_cache.png)
 
