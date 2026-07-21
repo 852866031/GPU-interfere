@@ -164,9 +164,13 @@ Because a copy kernel touches **both** an input and an output buffer, each kerne
 
 ```text
 grid, block = 85, 1024                       # half the SMs, per kernel
+
+record(start)                                # timestamp before launch
 copy<<<grid, block, streamA>>>(inA, outA, n, itr)   # kernel A  ┐ overlap on
 copy<<<grid, block, streamB>>>(inB, outB, n, itr)   # kernel B  ┘ separate streams
-deviceSynchronize()                          # t_coloc = makespan (slower one ends)
+record(stop)
+synchronize(stop)                            # wait for the slower kernel to finish
+t_coloc = elapsed(start, stop)               # makespan of the pair
 ```
 
 Compared against `t_alone` (one kernel), and swept over `num_bytes` — so any `t_coloc > t_alone` can only come from the shared L2.
