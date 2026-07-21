@@ -150,7 +150,7 @@ a2.text(0.5, (alone_h + k1c) / 2 + 25, f"-{100 - agg/2/alone_h*100:.0f}% per ker
 a2.set_ylim(0, peak * 1.18); a2.set_ylabel("achieved bandwidth (GB/s)")
 a2.set_xticks(x); a2.set_xticklabels(["1 kernel alone\n(on its 50% SMs)",
                                       "2 kernels colocated\n(A + B, each on 50% SMs)"])
-a2.set_title("4.1.3b  Bandwidth: each kernel on its own 50% of SMs")
+a2.set_title("4.1.3b  Bandwidth achieved")
 a2.legend(fontsize=7.5, loc="upper left", frameon=False)
 
 # --- a3: same interference seen as latency ---
@@ -164,7 +164,7 @@ a3.axhline(al, color="#4C78A8", ls=":", lw=1.2)
 a3.text(2.45, al - 45, "alone baseline", fontsize=8, color="#4C78A8", ha="right")
 a3.set_ylim(0, max(vals) * 1.2); a3.set_ylabel("kernel latency (ms) — lower is better")
 a3.set_xticks(range(3)); a3.set_xticklabels(labels)
-a3.set_title("4.1.3c  Same interference, seen as latency")
+a3.set_title("4.1.3c  Latency comparison")
 
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_413_mem_bw.png"), dpi=150); plt.close(fig)
 
