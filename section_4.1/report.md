@@ -65,7 +65,7 @@ The experiments do **not** use real applications. They use two tiny, deliberatel
 ```cuda
 __global__ void sleep_kernel(long long num_itr) {
     for (long long i = 0; i < num_itr; ++i)
-        asm volatile("nanosleep.u32 1000;");   // suspend this warp ~1000 ns
+        asm volatile("nanosleep.u32 1000;");
 }
 ```
 
@@ -123,6 +123,20 @@ With that vocabulary fixed, the three experiments below simply change *which res
 | **Do both kernels fit on an SM together?** | **Run A: yes** (1+1 blocks = 1536 threads = the SM limit). **Run B: no** (each kernel alone needs all 1536 threads, so only one fits at a time) | |
 | Shared resource under test | per-SM thread / warp / block slots (the block scheduler) | |
 | Deliberately *not* involved | memory, cache, compute pipelines (the sleep kernel uses none) | |
+
+**How the kernels are launched.** The `sleep_kernel` takes no buffers, so the launch is pure scheduling. We time three modes at each block count (170 = 1 block/SM, 340 = 2 blocks/SM):
+
+```text
+threads = 768                    # half the 1536-thread SM budget
+for blocks in [170, 340]:        # 768, 1536 threads
+    record(start)
+    sleep<<<blocks, threads, streamA>>>(itr)   # kernel A  ┐ overlap on
+    sleep<<<blocks, threads, streamB>>>(itr)   # kernel B  ┘ separate streams
+    record(stop); synchronize(stop)
+    t_coloc = elapsed(start, stop)             # makespan of the pair
+```
+
+**The tell:** *t_coloc ≈ t_alone* → the two ran concurrently (Run A); *t_coloc ≈ t_seq* → the scheduler serialized them (Run B).
 
 ![4.1.1 thread-block scheduler](figures/fig_411_tb_scheduler.png)
 
@@ -225,16 +239,14 @@ Swept over `num_bytes` and compared — so any `t_coloc > t_alone` can only come
 
 ![4.1.3 memory bandwidth](figures/fig_413_mem_bw.png)
 
-**How to read the figure.** This figure has **two separate plots**, and note their y-axis is **achieved DRAM bandwidth in GB/s** (higher = faster), *not* latency like the earlier experiments.
+**How to read the figure.** Two panels showing the *same* colocation test — one as **bandwidth** (left, higher = faster), one as **latency** (right, lower = faster):
 
-- **Left (4.1.3a — saturation curve):** a line plot for Part A. The **x-axis is the number of thread blocks** launched by a *single* kernel on the full GPU; each point is the bandwidth that one kernel achieves at that block count. Reading left→right shows bandwidth climbing as more blocks are added, then flattening once the memory system is full — the dotted line marks that ~1200 GB/s ceiling. It answers "how much parallelism does one kernel need to saturate DRAM?"
-- **Right (4.1.3b — colocation, MPS):** **two bars plus two reference lines** for Part B, with bandwidth (GB/s) on the y-axis:
-  - **Bar 1, "1 kernel alone (on its 50% SMs)" = 940:** the baseline — a single kernel confined to half the GPU, with nothing else running. This is what each kernel *could* get if it never had to share.
-  - **Bar 2, "2 kernels colocated" = stacked A (576) + B (556) = 1133:** the two kernels run at the same time, each still pinned to its own separate half of the SMs. The bar is **stacked** so its total height is the *combined* bandwidth the GPU delivers to both kernels; the split shows each kernel's share.
-  - **Dashed line at 1880 ("if independent: 2 × 940 = demanded"):** what the two kernels *together* would consume if their separate halves truly didn't interfere (just twice the baseline). It sits far *above* the ceiling — i.e. it is impossible.
-  - **Dotted line at ~1204 ("DRAM ceiling = max possible"):** the most bandwidth the memory system can ever deliver, carried over from the left plot.
-
-  Read it as a cause-and-effect chain: the two kernels *demand* 1880 GB/s (dashed line), but DRAM caps out at ~1204 (dotted line), so their combined bar is forced down to that ceiling (A + B = 1133) — which means **each kernel is throttled from its 940 baseline to ~566, a 40% loss** (the arrow into kernel A's segment). The gap between the dashed demand line and the actual stacked bar *is* the bandwidth interference, and the two reference lines explain why it is unavoidable: demand exceeds supply.
+- **Left — "Bandwidth achieved":**
+  - **Bar 1, "1 kernel alone (50% SMs)" = 940:** the baseline — one kernel confined to half the GPU, with nothing else running. What each kernel *could* get if it never had to share.
+  - **Bar 2, "2 kernels colocated" = stacked A (576) + B (556) = 1133:** both kernels at once, each still pinned to its own separate half of the SMs. The bar is **stacked** so its height is the *combined* bandwidth the GPU delivers; the split shows each kernel's share.
+  - **Dotted line ~1204 = the DRAM ceiling** — the most bandwidth the memory system can ever deliver (the peak a single full-GPU kernel reaches; see Part A).
+  - The arrow marks the drop: each kernel falls from **940 → ~566 (−40%)**. The aggregate is pinned at the ceiling — two kernels cannot exceed the one memory system's limit, so each gives up ~40%.
+- **Right — "Latency comparison":** the identical result as time. A copy that finishes in **425 ms** alone takes **694 / 719 ms** colocated (dotted line = the alone baseline) — each kernel ~65% slower.
 
 **Results — Part A (saturation).**
 
@@ -255,7 +267,7 @@ DRAM bandwidth rises steeply, then **saturates at ≈ 1200 GB/s** (~67% of the R
 
 **Reading (bandwidth).** A single kernel on just half the SMs already reaches 940 GB/s — most of the way to the full-GPU peak. If bandwidth were free, running a second kernel on the *other* half would let each keep its 940 GB/s (aggregate 1880). Instead, the aggregate is **capped at ~1133 GB/s** — the same ceiling a single full-GPU kernel hits — so **each kernel is throttled to ~566 GB/s, a 40% loss**, purely from sharing DRAM. The two kernels touch different SMs and different memory, yet they collide at the memory controllers.
 
-**Reading (latency).** The same interference, expressed as the metric the *user* actually feels — how long the kernel takes (panel **c** of the figure above):
+**Reading (latency).** The same interference, expressed as the metric the *user* actually feels — how long the kernel takes (the **right panel** of the figure above):
 
 A copy that finishes in **425 ms** when it has its half of the GPU to itself takes **694–719 ms** when a second kernel runs on the other half — each kernel is **~65% slower** (dotted line = the alone baseline; lower is better). Note the two latencies do **not** add up the way the bandwidths do: the kernels run *concurrently*, so the pair finishes in ~719 ms (the makespan, ≈ the slower one), not 694 + 719. This is the mirror image of the bandwidth plot — bandwidth per kernel drops ~40%, so latency per kernel rises ~65% (a 40% throughput cut means each kernel needs 1/0.6 ≈ 1.65× the time).
 

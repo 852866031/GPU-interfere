@@ -56,7 +56,26 @@ As in 4.1, these are deliberately one-dimensional micro-kernels, each built to s
 
 ### 2.1 The copy kernels
 
-`copy_kernel_per_tb` gives **each thread block its own private, L1-sized region** to copy over and over — so whether it stays fast depends on whether that region fits in L1. `copy_kernel` is the same grid-strided streaming copy used in 4.1; in 4.2.2 we deliberately give it a **16 MB array that fits in L2**, so its loads return quickly and it *issues instructions continuously* (this matters — see 4.2.2).
+`copy_kernel_per_tb` gives **each thread block its own private, non-overlapping region** to copy over and over — so whether it stays fast depends on whether that region fits in the per-SM L1:
+
+```cuda
+__global__ void copy_kernel_per_tb(float *in, float *out,
+                                   long long num_floats_per_tb, long long num_itrs,
+                                   int region_size_bytes) {
+    int floats_per_region = region_size_bytes / sizeof(float);
+    int regions_per_tb    = (num_floats_per_tb + floats_per_region - 1) / floats_per_region;
+    int block_begin = blockIdx.x * regions_per_tb * floats_per_region;  // this block's OWN slice
+    int block_end   = block_begin + num_floats_per_tb;
+
+    for (int i = 0; i < num_itrs; i++)                       // reuse the region num_itrs times
+        for (int j = block_begin + threadIdx.x; j < block_end; j += blockDim.x)
+            out[j] = in[j];                                  // copy within this block's slice
+}
+```
+
+The difference from the 4.1 `copy_kernel` matters: there the whole grid streamed one shared array (probing the GPU-wide L2/DRAM); here **each block gets a private slice** (`block_begin = blockIdx.x * …`), because **L1 is per-SM** and a block lives on one SM. Sweeping `num_bytes_per_tb` sizes each block's footprint (≈ 2× that, since it reads an input and writes an output region), and the `num_itrs` reuse makes it stay in L1 if it fits. When two kernels colocate one block each on the same SM, their combined footprint competes for that SM's single L1 (§4.2.1). (`region_size_bytes`, set to the unified L1 size, just aligns the per-block regions so they never overlap.)
+
+`copy_kernel` is the same grid-strided streaming copy used in 4.1; in 4.2.2 we deliberately give it a **16 MB array that fits in L2**, so its loads return quickly and it *issues instructions continuously* (this matters — see 4.2.2).
 
 ### 2.2 The compute kernels and "ILP"
 
@@ -88,18 +107,37 @@ __global__ void mul_fp32_ilp4(float *a, float *b, float *c, long long num_itr) {
 
 **Hardware placement.**
 
-| | Kernel A | Kernel B |
+| | Block Copy kernel A | Block Copy kernel B |
 |---|---|---|
-| Launched from | stream 1 (same process) | stream 2 (same process) |
-| Blocks per kernel | 170 (one per SM) | 170 (one per SM) |
-| Threads per block | 64 (2 warps) | 64 (2 warps) |
+| Launched from | stream 1 | stream 2 |
+| Blocks per kernel | 170 | 170 |
 | SMs each kernel uses | all 170 | all 170 |
-| **Do the two kernels share an SM?** | **Yes** — one block from each on every SM | |
+| Threads per block | 64 (2 warps) | 64 (2 warps) |
 | SMSPs used per SM | 2 of 4 | the other 2 of 4 |
-| **Do they share a warp scheduler?** | **No** (by design — different SMSPs) — this isolates the L1 effect | |
-| Shared resource under test | the per-SM **L1 cache** (128 KB), shared by all SMSPs | |
 
 Because each block copies an input *and* an output region, its footprint is ≈ **2× the copy size**; two colocated blocks make it ≈ **4×**, so L1 (128 KB) overflows near copy size ≈ 128 ÷ 4 ≈ **32 KB**.
+
+**How the kernels are launched.** `grid = 170` puts one block on each SM; colocated, the two kernels place one block each on every SM, so they share that SM's L1:
+
+```text
+grid, block, L1 = 170, 64, 128*1024          # 1 block/SM, 2 warps, region = L1 size
+inA, outA = alloc(...); inB, outB = alloc(...)   # each kernel its own buffers
+
+# baseline: ONE kernel alone
+record(start)
+copy_per_tb<<<grid, block>>>(inA, outA, bytes_per_tb, itr, L1)
+record(stop); synchronize(stop)
+t_alone = elapsed(start, stop)
+
+# colocated: two kernels at once on SEPARATE streams
+record(start)
+copy_per_tb<<<grid, block, streamA>>>(inA, outA, bytes_per_tb, itr, L1)   # kernel A ┐ one block each
+copy_per_tb<<<grid, block, streamB>>>(inB, outB, bytes_per_tb, itr, L1)   # kernel B ┘ per SM
+record(stop); synchronize(stop)
+t_coloc = elapsed(start, stop)
+```
+
+Swept over `bytes_per_tb` (4 KB → 64 KB) and compared — with both kernels on the same SMs but different SMSPs, any `t_coloc > t_alone` can only come from the shared L1.
 
 ![4.2.1 L1 cache interference](figures/fig_421_l1_cache.png)
 

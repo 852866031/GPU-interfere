@@ -120,14 +120,7 @@ with open(os.path.join(RES, "mem_bw_mps.csv"), "w", newline="") as f:
         w.writerow([f"colocated_inst{i}", b, l])
     w.writerow(["colocated_aggregate", sum(mps["coloc"]), max(mps_lat["coloc"])])
 
-fig, (a1, a2, a3) = plt.subplots(1, 3, figsize=(15.5, 4.3))
-
-# --- a1: saturation curve ---
-a1.plot(tbs, [sat[t] for t in tbs], "-o", color="#4C78A8")
-a1.axhline(max(sat.values()), color="#666", ls=":", lw=1)
-a1.text(tbs[1], max(sat.values())*0.94, f"saturates ~{max(sat.values()):.0f} GB/s", fontsize=8, color="#666")
-a1.set_xlabel("thread blocks (single kernel, full GPU)"); a1.set_ylabel("achieved bandwidth (GB/s)")
-a1.set_title("4.1.3a  DRAM bandwidth saturation")
+fig, (a2, a3) = plt.subplots(1, 2, figsize=(13.5, 5))
 
 # --- a2: bandwidth, colocation (stacked) ---
 peak = max(sat.values()); alone_h = mps["alone_half"]
@@ -142,7 +135,7 @@ a2.text(1, k1c / 2, f"A\n{k1c:.0f}", ha="center", va="center", fontsize=8)
 a2.text(1, k1c + k2c / 2, f"B\n{k2c:.0f}", ha="center", va="center", fontsize=8)
 a2.text(1, agg + 20, f"A+B = {agg:.0f}", ha="center", fontsize=9, weight="bold", color="#8B0000")
 a2.axhline(peak, color="#333", ls=":", lw=1.3)
-a2.text(1.46, peak + 15, f"DRAM ceiling ~{peak:.0f} GB/s  (max possible)", fontsize=8, color="#333", ha="right")
+a2.text(0.5, peak + 18, f"DRAM ceiling ~{peak:.0f} GB/s  (max possible)", fontsize=8, color="#333", ha="center")
 a2.annotate("", xy=(1, k1c), xytext=(0, alone_h),
             arrowprops=dict(arrowstyle="->", color="#888", lw=1.4, ls="--"))
 a2.text(0.5, (alone_h + k1c) / 2 + 25, f"-{100 - agg/2/alone_h*100:.0f}% per kernel",
@@ -150,7 +143,7 @@ a2.text(0.5, (alone_h + k1c) / 2 + 25, f"-{100 - agg/2/alone_h*100:.0f}% per ker
 a2.set_ylim(0, peak * 1.18); a2.set_ylabel("achieved bandwidth (GB/s)")
 a2.set_xticks(x); a2.set_xticklabels(["1 kernel alone\n(on its 50% SMs)",
                                       "2 kernels colocated\n(A + B, each on 50% SMs)"])
-a2.set_title("4.1.3b  Bandwidth achieved")
+a2.set_title("Bandwidth achieved")
 a2.legend(fontsize=7.5, loc="upper left", frameon=False)
 
 # --- a3: same interference seen as latency ---
@@ -164,7 +157,7 @@ a3.axhline(al, color="#4C78A8", ls=":", lw=1.2)
 a3.text(2.45, al - 45, "alone baseline", fontsize=8, color="#4C78A8", ha="right")
 a3.set_ylim(0, max(vals) * 1.2); a3.set_ylabel("kernel latency (ms) — lower is better")
 a3.set_xticks(range(3)); a3.set_xticklabels(labels)
-a3.set_title("4.1.3c  Latency comparison")
+a3.set_title("Latency comparison")
 
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_413_mem_bw.png"), dpi=150); plt.close(fig)
 
