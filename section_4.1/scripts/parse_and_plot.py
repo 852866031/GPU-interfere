@@ -88,7 +88,6 @@ for i in range(1, len(sizes)):
         break
 if cy is not None:
     ax.axvline(cx, color="#555", ls="-.", lw=1.2)
-    ax.plot([cx], [cy], "o", color="#555", ms=6)
     ax.text(cx+1.5, 20, f"~{cx:.0f} MB", fontsize=8, color="#555")
 ax.set_xlabel("copy size per kernel (MB)"); ax.set_ylabel("latency (ms)")
 ax.set_title("4.1.2  L2 cache interference"); ax.legend(fontsize=8); fig.tight_layout()
