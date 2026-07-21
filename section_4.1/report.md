@@ -160,40 +160,16 @@ Because a copy kernel touches **both** an input and an output buffer, each kerne
 | Also shared (secondary) | DRAM, once the working set spills out of L2 | |
 | Deliberately *not* shared | thread/warp slots, L1, warp scheduler (different SMs) | |
 
-**How the two kernels are launched.** The key is that each kernel gets its **own input/output buffers** and its **own CUDA stream**, and both are launched with `85 × 1024` — so the GPU runs them concurrently on disjoint SM sets, and the only thing they can fight over is the shared L2.
+**How the two kernels are launched (colocated case).** Each kernel gets its **own buffers** and its **own non-blocking stream**, both launched `85 × 1024`, so they run concurrently on disjoint SMs — the only thing they share is the L2:
 
 ```text
-# ---- setup ----
-grid, block = 85, 1024              # 85 blocks (half the SMs), 1024 threads each
-n = num_bytes / 4                   # floats per kernel = the swept size (4 MB … 128 MB)
-in1, out1 = alloc(n); fill(in1)     # kernel A's private buffers
-in2, out2 = alloc(n); fill(in2)     # kernel B's private buffers  (separate memory!)
-
-kernel copy(in, out, n, itr):       # the copy kernel (grid-strided, repeated)
-    tid  = blockIdx.x*blockDim.x + threadIdx.x
-    step = gridDim.x*blockDim.x
-    repeat itr times:
-        for i = tid; i < n; i += step:
-            out[i] = in[i]
-
-# ---- mode 1: ALONE (baseline latency) ----
-t_alone = time {
-    copy<<<grid, block>>>(in1, out1, n, itr)
-    deviceSynchronize()
-}
-
-# ---- mode 3: COLOCATED (the two kernels at the same time) ----
-s1 = createStream(nonBlocking)
-s2 = createStream(nonBlocking)
-t_coloc = time {
-    copy<<<grid, block, s1>>>(in1, out1, n, itr)   # kernel A on stream 1
-    copy<<<grid, block, s2>>>(in2, out2, n, itr)   # kernel B on stream 2  -> overlaps A
-    deviceSynchronize()                            # makespan = when the slower one ends
-}
-# each mode is the median of 10 runs; sweep num_bytes and compare t_alone vs t_coloc
+grid, block = 85, 1024                       # half the SMs, per kernel
+copy<<<grid, block, streamA>>>(inA, outA, n, itr)   # kernel A  ┐ overlap on
+copy<<<grid, block, streamB>>>(inB, outB, n, itr)   # kernel B  ┘ separate streams
+deviceSynchronize()                          # t_coloc = makespan (slower one ends)
 ```
 
-Because A and B are on **separate non-blocking streams**, the driver launches them together and the GPU's block scheduler places their 85 + 85 blocks across all 170 SMs — one block per SM, no SM shared — so `t_coloc > t_alone` can only come from the shared L2.
+Compared against `t_alone` (one kernel), and swept over `num_bytes` — so any `t_coloc > t_alone` can only come from the shared L2.
 
 ![4.1.2 L2 cache interference](figures/fig_412_l2_cache.png)
 
