@@ -74,6 +74,22 @@ ax.plot(sizes, [l2[s]["coloc_ms"] for s in sizes], "-s", color="#E45756", label=
 # combined-footprint = L2 threshold: 4*size (in+out per kernel, 2 kernels) = 96 MB -> size = 24 MB
 ax.axvline(L2_MB/4, color="#666", ls=":", lw=1)
 ax.text(L2_MB/4+1, ax.get_ylim()[1]*0.6, "combined footprint\n= 96 MB L2", fontsize=8, color="#666")
+# second overlap: colocated converges back down to ~2x alone (both kernels now fully
+# DRAM-bound -> colocation = pure serialization again, no L2 left to lose)
+def excess(s): return l2[s]["coloc_ms"] / (2*l2[s]["alone_ms"]) - 1
+cx = cy = None; peaked = False
+for i in range(1, len(sizes)):
+    if excess(sizes[i-1]) > 0.30: peaked = True
+    if peaked and excess(sizes[i-1]) > 0.10 >= excess(sizes[i]):
+        e0, e1 = excess(sizes[i-1]), excess(sizes[i])
+        t = (e0 - 0.10) / (e0 - e1)
+        cx = sizes[i-1] + t*(sizes[i]-sizes[i-1])
+        cy = l2[sizes[i-1]]["coloc_ms"] + t*(l2[sizes[i]]["coloc_ms"] - l2[sizes[i-1]]["coloc_ms"])
+        break
+if cy is not None:
+    ax.axvline(cx, color="#555", ls="-.", lw=1.2)
+    ax.plot([cx], [cy], "o", color="#555", ms=6)
+    ax.text(cx+1.5, 20, f"~{cx:.0f} MB", fontsize=8, color="#555")
 ax.set_xlabel("copy size per kernel (MB)"); ax.set_ylabel("latency (ms)")
 ax.set_title("4.1.2  L2 cache interference"); ax.legend(fontsize=8); fig.tight_layout()
 fig.savefig(os.path.join(FIG, "fig_412_l2_cache.png"), dpi=150); plt.close(fig)
