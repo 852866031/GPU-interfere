@@ -255,9 +255,7 @@ DRAM bandwidth rises steeply, then **saturates at ≈ 1200 GB/s** (~67% of the R
 
 **Reading (bandwidth).** A single kernel on just half the SMs already reaches 940 GB/s — most of the way to the full-GPU peak. If bandwidth were free, running a second kernel on the *other* half would let each keep its 940 GB/s (aggregate 1880). Instead, the aggregate is **capped at ~1133 GB/s** — the same ceiling a single full-GPU kernel hits — so **each kernel is throttled to ~566 GB/s, a 40% loss**, purely from sharing DRAM. The two kernels touch different SMs and different memory, yet they collide at the memory controllers.
 
-**Reading (latency).** The same interference, expressed as the metric the *user* actually feels — how long the kernel takes:
-
-![4.1.3c latency view](figures/fig_413c_latency.png)
+**Reading (latency).** The same interference, expressed as the metric the *user* actually feels — how long the kernel takes (panel **c** of the figure above):
 
 A copy that finishes in **425 ms** when it has its half of the GPU to itself takes **694–719 ms** when a second kernel runs on the other half — each kernel is **~65% slower** (dotted line = the alone baseline; lower is better). Note the two latencies do **not** add up the way the bandwidths do: the kernels run *concurrently*, so the pair finishes in ~719 ms (the makespan, ≈ the slower one), not 694 + 719. This is the mirror image of the bandwidth plot — bandwidth per kernel drops ~40%, so latency per kernel rises ~65% (a 40% throughput cut means each kernel needs 1/0.6 ≈ 1.65× the time).
 

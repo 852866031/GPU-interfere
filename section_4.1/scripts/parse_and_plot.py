@@ -120,63 +120,53 @@ with open(os.path.join(RES, "mem_bw_mps.csv"), "w", newline="") as f:
         w.writerow([f"colocated_inst{i}", b, l])
     w.writerow(["colocated_aggregate", sum(mps["coloc"]), max(mps_lat["coloc"])])
 
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(10.5, 4.2))
+fig, (a1, a2, a3) = plt.subplots(1, 3, figsize=(15.5, 4.3))
+
+# --- a1: saturation curve ---
 a1.plot(tbs, [sat[t] for t in tbs], "-o", color="#4C78A8")
 a1.axhline(max(sat.values()), color="#666", ls=":", lw=1)
 a1.text(tbs[1], max(sat.values())*0.94, f"saturates ~{max(sat.values()):.0f} GB/s", fontsize=8, color="#666")
 a1.set_xlabel("thread blocks (single kernel, full GPU)"); a1.set_ylabel("achieved bandwidth (GB/s)")
 a1.set_title("4.1.3a  DRAM bandwidth saturation")
 
+# --- a2: bandwidth, colocation (stacked) ---
 peak = max(sat.values()); alone_h = mps["alone_half"]
 k1c, k2c = mps["coloc"][0], mps["coloc"][1]      # measured colocated per kernel
-agg = k1c + k2c; demand = 2 * alone_h
-# Two bars: baseline (1 kernel on its half) vs colocated total (kernel A + B stacked).
+agg = k1c + k2c
 x = [0, 1]; w = 0.55
 a2.bar(x[0], alone_h, w, color="#4C78A8", edgecolor="white")
 a2.bar(x[1], k1c, w, color="#E45756", edgecolor="white", label="kernel A")
 a2.bar(x[1], k2c, w, bottom=k1c, color="#F2A6A0", edgecolor="white", label="kernel B")
-# value labels
-a2.text(0, alone_h + 25, f"{alone_h:.0f}", ha="center", fontsize=9, weight="bold")
+a2.text(0, alone_h + 20, f"{alone_h:.0f}", ha="center", fontsize=9, weight="bold")
 a2.text(1, k1c / 2, f"A\n{k1c:.0f}", ha="center", va="center", fontsize=8)
 a2.text(1, k1c + k2c / 2, f"B\n{k2c:.0f}", ha="center", va="center", fontsize=8)
-a2.text(1, agg + 25, f"A+B = {agg:.0f}", ha="center", fontsize=9, weight="bold", color="#8B0000")
-# reference lines: demand-if-independent (impossible) and the DRAM ceiling
-a2.axhline(demand, color="#4C78A8", ls="--", lw=1.2)
-a2.text(1.46, demand + 20, f"if independent: 2 x {alone_h:.0f} = {demand:.0f}  (demanded)",
-        fontsize=8, color="#4C78A8", ha="right")
+a2.text(1, agg + 20, f"A+B = {agg:.0f}", ha="center", fontsize=9, weight="bold", color="#8B0000")
 a2.axhline(peak, color="#333", ls=":", lw=1.3)
-a2.text(1.46, peak + 20, f"DRAM ceiling ~{peak:.0f} GB/s  (max possible)",
-        fontsize=8, color="#333", ha="right")
-# per-kernel loss arrow from the baseline bar to kernel A's segment
+a2.text(1.46, peak + 15, f"DRAM ceiling ~{peak:.0f} GB/s  (max possible)", fontsize=8, color="#333", ha="right")
 a2.annotate("", xy=(1, k1c), xytext=(0, alone_h),
             arrowprops=dict(arrowstyle="->", color="#888", lw=1.4, ls="--"))
 a2.text(0.5, (alone_h + k1c) / 2 + 25, f"-{100 - agg/2/alone_h*100:.0f}% per kernel",
         ha="center", fontsize=8.5, color="#555")
-a2.set_ylim(0, demand * 1.16); a2.set_ylabel("achieved bandwidth (GB/s)")
+a2.set_ylim(0, peak * 1.18); a2.set_ylabel("achieved bandwidth (GB/s)")
 a2.set_xticks(x); a2.set_xticklabels(["1 kernel alone\n(on its 50% SMs)",
                                       "2 kernels colocated\n(A + B, each on 50% SMs)"])
-a2.set_title("4.1.3b  Two kernels, each on its own 50% of SMs")
+a2.set_title("4.1.3b  Bandwidth: each kernel on its own 50% of SMs")
 a2.legend(fontsize=7.5, loc="upper left", frameon=False)
-fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_413_mem_bw.png"), dpi=150); plt.close(fig)
 
-# ---------- 4.1.3c latency view of the same Part-B interference ----------
+# --- a3: same interference seen as latency ---
 al = mps_lat["alone_half"]; l1, l2v = mps_lat["coloc"][0], mps_lat["coloc"][1]
-figL, axL = plt.subplots(figsize=(5.2, 4.2))
 labels = ["1 kernel alone\n(on its 50% SMs)", "kernel A\n(colocated)", "kernel B\n(colocated)"]
 vals = [al, l1, l2v]; cols = ["#4C78A8", "#E45756", "#E45756"]
-axL.bar(range(3), vals, width=0.62, color=cols, edgecolor="white")
+a3.bar(range(3), vals, width=0.62, color=cols, edgecolor="white")
 for i, v in enumerate(vals):
-    axL.text(i, v + 8, f"{v:.0f} ms", ha="center", fontsize=9, weight="bold")
-axL.axhline(al, color="#4C78A8", ls=":", lw=1.2)
-axL.text(2.45, al - 45, "alone baseline", fontsize=8, color="#4C78A8", ha="right")
-axL.annotate("", xy=(1, l1), xytext=(0, al),
-             arrowprops=dict(arrowstyle="->", color="#888", lw=1.4, ls="--"))
-axL.text(0.5, (al + l1) / 2 + 20, f"+{(l1/al-1)*100:.0f}% / +{(l2v/al-1)*100:.0f}%\nlonger",
-         ha="center", fontsize=8.5, color="#555")
-axL.set_ylim(0, max(vals) * 1.2); axL.set_ylabel("kernel latency (ms)  — lower is better")
-axL.set_xticks(range(3)); axL.set_xticklabels(labels)
-axL.set_title("4.1.3c  Same interference, seen as latency")
-figL.tight_layout(); figL.savefig(os.path.join(FIG, "fig_413c_latency.png"), dpi=150); plt.close(figL)
+    a3.text(i, v + 8, f"{v:.0f} ms", ha="center", fontsize=9, weight="bold")
+a3.axhline(al, color="#4C78A8", ls=":", lw=1.2)
+a3.text(2.45, al - 45, "alone baseline", fontsize=8, color="#4C78A8", ha="right")
+a3.set_ylim(0, max(vals) * 1.2); a3.set_ylabel("kernel latency (ms) — lower is better")
+a3.set_xticks(range(3)); a3.set_xticklabels(labels)
+a3.set_title("4.1.3c  Same interference, seen as latency")
+
+fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_413_mem_bw.png"), dpi=150); plt.close(fig)
 
 # ---------- console summary ----------
 print("=== 4.1.1 thread-block scheduler ===")
