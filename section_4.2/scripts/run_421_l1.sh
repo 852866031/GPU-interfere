@@ -12,7 +12,9 @@ itrs=15000
 
 # per-block copy sizes in KB (per-block footprint = 2x this; two blocks = 4x).
 # knee expected where 4x size ~ 128 KB L1  => ~24-32 KB.
-sizes_kb=(4 8 12 16 20 24 28 32 40 48 56 64)
+# Sizes > 64 KB probe the "fall-off": once even one kernel overflows L1, both
+# spill to the roomy L2 and colocated stays ~= alone (faster than serial).
+sizes_kb=(4 8 12 16 20 24 28 32 40 48 56 64 80 96 128)
 
 for kb in "${sizes_kb[@]}"; do
   bytes=$(( kb * 1024 ))

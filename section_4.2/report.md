@@ -91,7 +91,23 @@ __global__ void mul_fp32_ilp4(float *a, float *b, float *c, long long num_itr) {
 }
 ```
 
-**ILP = instruction-level parallelism.** `mul_fp32_ilp1` keeps a *single* dependent multiply chain: each multiply must wait for the previous one, so the warp stalls between issues and IPC is low. `mul_fp32_ilp4` keeps *four independent* chains, so the scheduler always has a ready instruction to issue — **higher IPC with the same number of warps**. Raising ILP is thus a dial for "how hard this kernel leans on the warp scheduler / pipeline," *without* changing occupancy. `mul_fp64_*` are identical but use `double` — which matters enormously on a consumer GPU, where FP64 hardware is a tiny fraction of FP32.
+**ILP = instruction-level parallelism.** `mul_fp32_ilp1` keeps a *single* dependent multiply chain: each multiply must wait for the previous one, so the warp stalls between issues and IPC is low. `mul_fp32_ilp4` keeps *four independent* chains, so the scheduler always has a ready instruction to issue — **higher IPC with the same number of warps**. Raising ILP is thus a dial for "how hard this kernel leans on the warp scheduler / pipeline," *without* changing occupancy.
+
+The FP64 kernel used in 4.2.3 is identical in structure — just `double` and `__dmul_rn` instead of `float` and `__fmul_rn`:
+
+```cuda
+__global__ void mul_fp64_ilp4(double *a, double *b, double *c, long long num_itr) {  // ◄ double (not float)
+    double op1=a[threadIdx.x], op2=b[threadIdx.x];        // ◄ double
+    double op3=1, op4=1, op5=1, op6=1;                    // ◄ double
+    for (long long i=0; i<num_itr; i++) {                 // 4 INDEPENDENT FP64 multiply chains
+        op3=__dmul_rn(op1,op3); op4=__dmul_rn(op2,op4);   // ◄ __dmul_rn = FP64 multiply
+        op5=__dmul_rn(op1,op5); op6=__dmul_rn(op2,op6);   // ◄ __dmul_rn
+    }
+    c[threadIdx.x]=op3+op4+op5+op6;
+}
+```
+
+The switch to `double` matters enormously on a consumer GPU, where FP64 hardware is a tiny fraction of FP32 (~1/64 on the RTX 5090) — so this kernel saturates the FP64 pipeline almost immediately (§4.2.3).
 
 ### 2.3 How a two-kernel scenario is built
 
@@ -145,14 +161,16 @@ Swept over `bytes_per_tb` (4 KB → 64 KB) and compared — with both kernels on
 
 | Copy size/block | alone | colocated | colocated / alone |
 |---|---|---|---|
-| 16 KB |  25.0 ms |  25.0 ms | 1.00× |
-| 24 KB |  37.2 ms |  66.4 ms | 1.78× |
-| **32 KB** |  47.0 ms | **250.0 ms** | **5.32×** |
-| 40 KB |  58.5 ms | 354.1 ms | **6.05×** |
-| 48 KB | 134.1 ms | 424.2 ms | 3.16× |
-| 64 KB | 564.8 ms | 566.9 ms | 1.00× |
+| 16 KB |   25.0 ms |   25.1 ms | 1.00× |
+| 24 KB |   37.3 ms |   64.0 ms | 1.72× |
+| 32 KB |   49.6 ms |  161.3 ms | 3.25× |
+| **40 KB** |   58.4 ms | **335.3 ms** | **5.74×** |
+| 48 KB |  121.6 ms |  423.5 ms | 3.48× |
+| 64 KB |  559.1 ms |  566.8 ms | 1.01× |
+| 80 KB |  705.8 ms |  707.7 ms | 1.00× |
+| 128 KB | 1127.3 ms | 1131.2 ms | 1.00× |
 
-**Reading.** The two dotted vertical lines mark the two cache cliffs (each copy kernel's footprint is 2× its copy size, so the L1 fills at copy size = 128 KB ÷ multiplier): the **red line at 32 KB** is where *two colocated* kernels' combined 4× footprint overflows L1, and the **blue line at 64 KB** is where a *single* kernel's own 2× footprint overflows it. They bracket three regimes: (1) **below the red line** both kernels' regions fit in L1 and colocated = alone; (2) **between the red and blue lines (32–56 KB)** the *colocated* pair thrashes L1 but a *single* kernel still fits — so colocated explodes to **>6× alone** and even rises **above the grey 2×-alone line** (colocation is worse than just running the two kernels one-after-another, because sharing destroys the L1 residency each kernel had to itself); (3) **at/after the blue line (≥64 KB)** a single kernel alone already overflows L1, so there is no residency left for a co-tenant to steal — colocated ≈ alone, the grey 2×-alone line shoots up past it, and concurrency pays off again. Note the two kernels never share a warp scheduler here — the entire effect comes from the shared L1.
+**Reading.** The two dotted vertical lines mark the two cache cliffs (each copy kernel's footprint is 2× its copy size, so the L1 fills at copy size = 128 KB ÷ multiplier): the **red line at 32 KB** is where *two colocated* kernels' combined 4× footprint overflows L1, and the **blue line at 64 KB** is where a *single* kernel's own 2× footprint overflows it. They bracket three regimes: (1) **below the red line** both kernels' regions fit in L1 and colocated = alone; (2) **between the red and blue lines (32–56 KB)** the *colocated* pair thrashes L1 but a *single* kernel still fits — so colocated explodes to **~5–6× alone** and even rises **above the grey 2×-alone line** (colocation is worse than just running the two kernels one-after-another, because sharing destroys the L1 residency each kernel had to itself); (3) **at/after the blue line (≥64 KB)** a single kernel alone already overflows L1 and spills to the roomy L2 — so there is no L1 residency left for a co-tenant to steal, and **both kernels simply stream from L2, which has ample room and bandwidth for both**. Colocated collapses back to ≈ alone (confirmed flat out to 128 KB, ratio ~1.00), while the grey 2×-alone line shoots up past it — i.e. **colocation is now 2× *faster* than serial**. This is the opposite of the L2 experiment's right end, where overflow fell back to *scarce DRAM* and colocated converged to 2×-alone; here the fallback is a large fast cache, so the two kernels never have to split anything. Note they never share a warp scheduler — the entire effect comes from the shared L1.
 
 **Takeaway.** The L1 is a shared SM resource just like the L2 is a shared GPU resource. Two kernels can sit on separate SMSPs and still cripple each other the instant their combined working set stops fitting in L1.
 
@@ -166,16 +184,12 @@ Swept over `bytes_per_tb` (4 KB → 64 KB) and compared — with both kernels on
 
 **Hardware placement.**
 
-| | Kernel A — copy (memory) | Kernel B — compute (FMA) |
+| | Kernel A: Block copy | Kernel B — FMA compute |
 |---|---|---|
 | Kernel | `copy_kernel`, 16 MB array | `mul_fp32_ilp4` |
 | Launched from | stream 1 | stream 2 |
 | Blocks per kernel | 170 (one per SM) | 170 (one per SM) |
-| Threads per block | 512 | 128 (one warp per SMSP) |
-| **Do the two kernels share an SM?** | **Yes** — 512 + 128 = 640 threads ≤ 1536, both co-resident | |
-| **Do they share the warp schedulers?** | **Yes** — both issue instructions on the same 4 SMSPs | |
-| Execution units used | load/store units, L1/L2 | FP32 FMA pipeline |
-| Shared resource under test | the **warp scheduler** (instruction-issue slots), *despite* different execution units | |
+| Threads per block | 512 (16 warps) | 128 (4 warps) |
 
 ![4.2.2 warp scheduler interference](figures/fig_422_ipc.png)
 

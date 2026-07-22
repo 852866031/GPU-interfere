@@ -1,0 +1,1 @@
+{"wall_start": 1784689134.22148, "wall_end": 1784689146.0892286, "cmd": ["python3", "workloads/llama_prefill.py"], "cost": null}

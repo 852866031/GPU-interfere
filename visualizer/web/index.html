@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GPU Workload Replay</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <h1>GPU Workload Replay <span class="sub" id="subtitle">— loading…</span></h1>
+    <select id="runsel" title="recorded run"></select>
+  </div>
+
+  <!-- profiling cost -->
+  <div class="panel costbox" id="costbox" style="display:none">
+    <span class="ptitle" style="margin:0">Profiling cost</span>
+    <span class="costpair"><span class="clabel">baseline</span><b id="cost-base">—</b></span>
+    <span class="carrow">→</span>
+    <span class="costpair"><span class="clabel">profiled</span><b id="cost-prof">—</b></span>
+    <span class="coverhead" id="cost-x">—</span>
+    <span class="csrc" id="cost-src"></span>
+  </div>
+
+  <!-- controls -->
+  <div class="panel controls">
+    <button id="play">▶ Play</button>
+    <select id="speed"><option value="0.05">0.05×</option><option value="0.1">0.1×</option><option value="0.25">0.25×</option><option value="1" selected>1×</option><option value="4">4×</option></select>
+    <input type="range" id="scrub" min="0" max="1" step="0.0005" value="0">
+    <span id="tlabel">t = 0 ms</span>
+  </div>
+
+  <!-- host side: launch -> queue -> gigathread -> running -->
+  <div class="row">
+    <div class="panel host" style="flex:0 0 200px">
+      <div class="ptitle">Host launch <span class="note">(CPU)</span></div>
+      <div id="launchfeed" class="chipline"><span class="empty">idle</span></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel host">
+      <div class="ptitle">Stream queues <span class="note">(submitted, not yet scheduled)</span></div>
+      <div id="queues"></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel host" style="flex:0 0 160px">
+      <div class="ptitle">GigaThread engine <span class="note">(next to dispatch)</span></div>
+      <div id="gigathread" class="chipline"></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="panel host">
+      <div class="ptitle">Running on GPU</div>
+      <div id="running" class="chipline"></div>
+    </div>
+  </div>
+
+  <!-- GPU assembly: brace from the Running box down over the whole GPU -->
+  <div class="gpuassembly">
+    <div class="fanzone">
+      <svg class="fan" viewBox="0 0 100 10" preserveAspectRatio="none">
+        <line x1="70" y1="0" x2="1" y2="10"/>
+        <line x1="95" y1="0" x2="99" y2="10"/>
+      </svg>
+      <div id="pendrow"></div>
+    </div>
+    <div class="panel gpu">
+      <!-- device telemetry (NVML) -->
+      <div class="panel nvml" id="nvml"></div>
+      <!-- PCIe -->
+      <div class="panel busbar">
+        <span class="busname">PCIe 5.0 x16</span>
+        <div class="busgauge"><div id="pciebar" style="width:0%"></div></div>
+        <span class="busval" id="pcieval">0 GB/s</span>
+      </div>
+      <!-- die: SM banks + L2 -->
+      <div class="panel die">
+        <div class="diecenter">
+          <div class="warpgauge"><span class="plabel">Warp slots (occupancy)</span>
+            <div class="busgauge"><div id="warpbar" style="width:0%"></div></div>
+            <span class="busval" id="warpval" style="text-align:left">0 / 8160</span></div>
+          <div class="bank" id="bank0"></div>
+          <div class="l2slab" id="l2slab">L2 cache · 96 MB</div>
+          <div class="bank" id="bank1"></div>
+        </div>
+      </div>
+      <!-- GDDR7: ONE memory system (per-controller split is not measurable) -->
+      <div class="panel busbar">
+        <span class="busname" style="width:60px">GDDR7</span>
+        <span class="busval" id="vramval" style="text-align:left; width:auto; flex:none">0 / 32 GB</span>
+        <div class="busgauge"><div id="vrambar" style="width:0%"></div></div>
+        <span class="busval" id="dramval" style="text-align:left; width:225px; margin-left:28px">BW 0 / 1792 GB/s</span>
+        <div class="busgauge" style="flex:0 0 160px"><div id="drambar" style="width:0%"></div></div>
+      </div>
+      <!-- NVLink -->
+      <div class="panel busbar">
+        <span class="busname">NVLink</span>
+        <div class="busgauge" style="opacity:.35"><div style="width:0%"></div></div>
+        <span class="busval na">N/A on GeForce (dummy)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Refresh resolution <span class="note">(what updates how often, and from which source)</span></div>
+    <div id="resmap"></div>
+  </div>
+
+  <!-- kernel launch timeline -->
+  <div class="panel">
+    <div class="ptitle">Kernel launch timeline <span class="note">(running kernels; one big row with 3 overlap slots)</span></div>
+    <canvas id="ktl" height="76"></canvas>
+    <div class="legend" id="ktllegend" style="margin-top:6px"></div>
+  </div>
+
+  <!-- lanes -->
+  <div class="panel">
+    <div class="ptitle">Resource rate lanes <span class="note">(device-wide, % of peak, ~100 µs samples — flows, not fill)</span></div>
+    <canvas id="lanes" height="222"></canvas>
+  </div>
+
+  <!-- hotspots -->
+  <div class="panel">
+    <div class="ptitle">Kernel hotspots <span class="note">(cumulative up to the cursor — follows the timeline)</span></div>
+    <canvas id="hots" height="210"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Kernels</div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="foot">
+    Honesty notes: SM tiles show <b>block residency</b> (from the block→SM trace), not per-SM counters.
+    L2 / DRAM / PCIe values are <b>throughput rates</b> — cache <i>fill level</i> is not measurable on real hardware.
+    The only true capacity gauges are VRAM and warp slots. Rate lanes are device-wide averages;
+    under colocation they blend both tenants. NVLink absent on this GPU.
+    Colors: on SM tiles a color = a <b>kernel</b>; on lanes/gauges/numbers a color = a <b>metric</b>
+    (the two domains never share a panel; 8-slot palette is reused across domains).
+    The <b>GPC grouping is schematic</b>: 170 SMs are real (CUDA device query), and GB202 really has
+    12 GPCs — but the true per-GPC SM distribution is per-die yield harvesting (11 TPCs fused off,
+    pattern unpublished and not queryable), so tiles are dealt into boxes evenly for display only.
+  </div>
+</div>
+<div id="tip"></div>
+<script src="app.js"></script>
+</body>
+</html>

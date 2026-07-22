@@ -1,0 +1,36 @@
+WARNING: CPU IP/backtrace sampling not supported, disabling.
+Try the 'nsys status --environment' command to learn more.
+
+WARNING: CPU context switch tracing not supported, disabling.
+Try the 'nsys status --environment' command to learn more.
+
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:00,  3.04it/s]
+Loading checkpoint shards:  50%|█████     | 2/4 [00:00<00:00,  3.02it/s]
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:00<00:00,  3.04it/s]
+Loading checkpoint shards: 100%|██████████| 4/4 [00:01<00:00,  4.13it/s]
+Loading checkpoint shards: 100%|██████████| 4/4 [00:01<00:00,  3.65it/s]
+Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+prompt batch: (8, 228)
+Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+CAPTURE_START 1784689142.100329
+We detected that you are passing `past_key_values` as a tuple of tuples. This is deprecated and will be removed in v4.47. Please convert your cache or use an appropriate `Cache` class (https://huggingface.co/docs/transformers/kv_cache#legacy-cache-format)
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-0522.qdstrm'
+
+[1/1] [0%                          ] report.nsys-repProcessing events...
+
+[1/1] [0%                          ] report.nsys-rep
+[1/1] [10%                         ] report.nsys-rep
+[1/1] [14%                         ] report.nsys-rep
+[1/1] [==18%                       ] report.nsys-rep
+[1/1] [==19%                       ] report.nsys-rep
+[1/1] [=================72%        ] report.nsys-rep
+[1/1] [========================100%] report.nsys-rep
+[1/1] [========================100%] report.nsys-rep
+REGION_MS 418.93
+done: prefill (8, 228) + 4 decode steps
+Generated:
+    /home/jiaxuan/Documents/Projects/gpu-interfere/visualizer/recordings/llama3_sm50/report.nsys-rep

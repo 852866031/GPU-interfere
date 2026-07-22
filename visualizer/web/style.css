@@ -1,0 +1,116 @@
+:root {
+  color-scheme: dark;
+  --surface-1: #1a1a19; --page: #0d0d0d;
+  --ink-1: #ffffff; --ink-2: #c3c2b7; --ink-3: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  /* categorical (dark steps, fixed order) */
+  --s1:#3987e5; --s2:#008300; --s3:#d55181; --s4:#c98500;
+  --s5:#199e70; --s6:#d95926; --s7:#9085e9; --s8:#e66767;
+  /* sequential blue ramp (magnitude tints) */
+  --q100:#cde2fb; --q250:#86b6ef; --q400:#3987e5; --q550:#1c5cab; --q700:#0d366b;
+  /* status (fixed) */
+  --st-good:#0ca30c; --st-warn:#fab219; --st-serious:#ec835a; --st-crit:#d03b3b;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--page); color: var(--ink-1);
+       font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 14px; }
+h1 { font-size: 15px; font-weight: 600; }
+.sub { color: var(--ink-3); font-size: 11px; }
+.wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.panel { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 8px; padding: 8px 10px; }
+.row { display: flex; gap: 10px; align-items: stretch; }
+.hdr { display: flex; justify-content: space-between; align-items: baseline; }
+.ptitle { font-size: 11px; font-weight: 600; color: var(--ink-2); text-transform: uppercase;
+          letter-spacing: .04em; margin-bottom: 6px; }
+.note { color: var(--ink-3); font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* profiling cost box */
+.costbox { display: flex; align-items: center; gap: 14px; }
+.costbox .ptitle { flex: none; }
+.costpair { display: inline-flex; align-items: baseline; gap: 6px; }
+.costpair .clabel { color: var(--ink-3); font-size: 11px; }
+.costpair b { font-variant-numeric: tabular-nums; font-size: 14px; }
+.carrow { color: var(--ink-3); }
+.coverhead { font-variant-numeric: tabular-nums; font-weight: 600; padding: 2px 8px;
+             border-radius: 5px; background: var(--grid); }
+.csrc { color: var(--ink-3); font-size: 10px; margin-left: auto; }
+
+/* controls */
+.controls { display: flex; gap: 10px; align-items: center; }
+button, select { background: var(--surface-1); color: var(--ink-1); border: 1px solid var(--axis);
+         border-radius: 6px; padding: 3px 12px; font: inherit; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+input[type=range] { flex: 1; accent-color: var(--q400); }
+#tlabel { font-variant-numeric: tabular-nums; color: var(--ink-2); min-width: 110px; text-align: right; }
+
+/* host row */
+.host { flex: 1; min-width: 0; }
+.chipline { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; align-items: center; }
+.chip { border: 1px solid var(--ring); border-radius: 4px; padding: 1px 7px; font-size: 11px;
+        color: var(--ink-2); display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.chip .sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.chip.run { border-color: var(--axis); }
+.prog { width: 54px; height: 4px; background: var(--grid); border-radius: 2px; overflow: hidden; }
+.prog > div { height: 100%; background: var(--q400); }
+.empty { color: var(--ink-3); font-size: 11px; font-style: italic; }
+.arrow { align-self: center; color: var(--ink-3); font-size: 16px; flex: none; }
+
+/* PCIe / NVLink bars */
+.busbar { display: flex; align-items: center; gap: 10px; padding: 5px 10px; }
+.busname { font-size: 11px; font-weight: 600; color: var(--ink-2); width: 130px; flex: none; }
+.busgauge { flex: 1; height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+.busgauge > div { height: 100%; background: var(--q400); border-radius: 4px; }
+.busval { font-variant-numeric: tabular-nums; color: var(--ink-2); width: 190px; text-align: right; font-size: 11px; }
+.na { color: var(--ink-3); font-style: italic; }
+
+/* GPU assembly: brace from the Running box down over the whole device */
+.gpuassembly { display: flex; flex-direction: column; }
+.fanzone { position: relative; height: 34px; margin-top: -6px; }
+.fan { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fan line { stroke: var(--axis); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+#pendrow { position: absolute; inset: 0; display: flex; justify-content: flex-end;
+           align-items: center; padding-right: 16px; }
+.pendbox { display: inline-flex; align-items: center; gap: 10px; background: var(--surface-1);
+           border: 1px solid var(--grid); border-radius: 6px; padding: 3px 10px; min-width: 340px;
+           min-height: 24px; }
+.plabel { font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+          color: var(--ink-3); flex: none; }
+.pendgrp { display: inline-flex; align-items: center; gap: 2px;
+           font-size: 10px; color: var(--ink-2); }
+.pendgrp i { width: 7px; height: 7px; border-radius: 1.5px; opacity: .75; display: inline-block; }
+.pendgrp .cnt { margin-left: 5px; font-variant-numeric: tabular-nums; }
+.gpu { width: 100%; display: flex; flex-direction: column; gap: 8px;
+       border-color: rgba(255,255,255,0.25); padding: 10px; }
+.gpu > .panel { border-color: var(--grid); }
+
+/* die */
+.die { display: flex; gap: 8px; }
+.diecenter { flex: 1; display: grid; grid-template-columns: 1fr;
+             align-content: center; gap: 6px; min-width: 0; }
+.bank { display: flex; gap: 6px; }
+.gpc { border: 1px solid var(--axis); border-radius: 5px; padding: 3px; flex: 1; min-width: 0; }
+.gpc .glabel { font-size: 9px; color: var(--ink-3); text-align: center; }
+.smgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+/* each SM tile is a warp-slot gauge: fills bottom-up by resident warps / 48, stacked per kernel */
+.sm { width: auto; height: auto; aspect-ratio: 1 / 1; border-radius: 3px; background: var(--grid);
+      border: 1px solid var(--ring); cursor: crosshair; }
+.warpgauge { display: flex; align-items: center; gap: 10px; padding: 0 2px 2px; }
+.warpgauge .busgauge { max-width: 420px; }
+.warpgauge .busval { width: 170px; }
+.l2slab { border: 1px solid var(--axis); border-radius: 6px; text-align: center;
+          padding: 7px; font-size: 11px; color: var(--ink-1); }
+#tip { position: fixed; pointer-events: none; background: var(--page); border: 1px solid var(--axis);
+       border-radius: 6px; padding: 5px 9px; font-size: 11px; display: none; z-index: 10;
+       box-shadow: 0 3px 10px rgba(0,0,0,.5); white-space: pre; }
+
+/* lanes + strips */
+canvas { display: block; width: 100%; }
+.nvml { display: flex; gap: 18px; font-size: 11px; color: var(--ink-2); flex-wrap: wrap; align-items: center; }
+.nvml b { color: var(--ink-1); font-variant-numeric: tabular-nums; font-weight: 600; }
+.throttle { display: inline-flex; align-items: center; gap: 5px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--ink-2); }
+.foot { color: var(--ink-3); font-size: 10px; line-height: 1.6; }
+.resrow { display: flex; gap: 8px; align-items: baseline; margin: 3px 0; }
+.resrow > b { width: 110px; flex: none; font-variant-numeric: tabular-nums; font-size: 11px; }
+.resrow > .src { width: 225px; flex: none; }

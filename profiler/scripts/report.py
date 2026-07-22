@@ -15,6 +15,26 @@ RATE = [m for m in METRICS if m[4] in ("inter-SM", "intra-SM")]   # resources yo
 LABEL = {m[0]: m[2] for m in METRICS}
 LEVEL = {m[0]: m[4] for m in METRICS}
 
+# key -> (what the counter really measures, what it structurally cannot measure).
+# Every column is a RATE (flow) counter; none measures STATE (space held) — the
+# hardware has no per-line ownership metadata, so cache *occupancy* is unobservable.
+MEANING = {
+    "occupancy": ("warp-slot **residency**: avg % of the 48 warp slots/SM holding a warp",
+                  "whether those warps make *progress* — a stalled warp counts the same as a running one"),
+    "dram":      ("achieved DRAM transfer **rate**, % of peak GB/s",
+                  "latency sensitivity; unique-bytes *footprint* (traffic ≠ working set)"),
+    "l2":        ("L2 **bandwidth**: sectors served per cycle, % of peak",
+                  "L2 **space held** — capacity/footprint, i.e. combined-working-set thrash"),
+    "l1":        ("L1TEX **bandwidth**: requests served per cycle, % of peak (NOT hit rate, NOT bytes resident)",
+                  "L1 **space held** — no counter reports cache occupancy; footprint only *inferred* (hit rate + cold-miss bytes, below)"),
+    "issue":     ("issue-slot **rate**: instructions issued vs max 4/cycle/SMSP",
+                  "*promptness* — whether a just-ready warp gets picked now; starvation of a latency-bound co-tenant"),
+    "fma":       ("FP32-FMA pipe issue **rate**, % of pipe peak",
+                  "datapath shared with FP64 on consumer parts — the two pipe counters pretend independence"),
+    "fp64":      ("FP64 pipe issue **rate**, % of pipe peak",
+                  "same shared-datapath coupling with FP32-FMA"),
+}
+
 def dominant(p):
     k = max(RATE, key=lambda m: p[m[0]])[0]
     return k, p[k]
@@ -51,6 +71,27 @@ def main():
     L.append("## Part 1 — Individual kernel measurements\n")
     L.append("Each value is the kernel's utilization of that resource, in **% of its peak**, "
              "measured in isolation.\n")
+    L.append("**What each column really is — and is not.** Hardware performance counters count "
+             "*events* (a request served, an instruction issued), so every column below is a "
+             "**rate** (a flow, % of peak throughput). None measures **state** — how much *space* "
+             "a kernel holds in a cache — because no per-line ownership metadata exists in the "
+             "hardware. That distinction is exactly where the prediction model will be blind:\n")
+    L.append("| column | NCU counter | what it really measures | what it cannot measure |")
+    L.append("|---|---|---|---|")
+    for key, metric, label, *_ in METRICS:
+        means, blind = MEANING[key]
+        L.append(f"| {label} | `{metric.split('.')[0]}` | {means} | {blind} |")
+    L.append("")
+    L.append("**What \"peak\" is.** The `peak_sustained` in each counter name: the theoretical "
+             "maximum rate that unit can sustain per clock cycle — an **architectural constant** "
+             "NCU knows from the chip spec, not something measured. 100% means: occupancy — all "
+             "48 warp slots/SM held; DRAM — the ~1.8 TB/s GDDR7 bus rate (achievable is ~1.2 TB/s, "
+             "so `dram`'s 69% is near the practical ceiling); warp scheduler — 4 instructions/"
+             "cycle/SM (one per SMSP); each pipe — accepting a new instruction at its own max rate "
+             "every cycle. Two consequences: **(a)** every column has a *different* denominator, so "
+             "percentages are comparable (and summable) only *within* a column, never across — "
+             "`fp64` at 99% saturates a unit 1/64 the width of the FMA pipe; **(b)** `.avg` divides "
+             "by *all* unit instances, so 100% requires every SM's copy flat-out simultaneously.\n")
     L.append(table_markdown(prof))
     L.append("")
     L.append("**How to read these numbers.**")

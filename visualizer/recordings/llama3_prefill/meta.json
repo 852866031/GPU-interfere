@@ -1,0 +1,1 @@
+{"wall_start": 1784688729.5974774, "wall_end": 1784688740.629814, "cmd": ["python3", "workloads/llama_prefill.py"], "cost": {"baseline_ms": 265.9, "profiled_ms": 274.42, "overhead": 1.0320421210981574, "source": "compute region"}}

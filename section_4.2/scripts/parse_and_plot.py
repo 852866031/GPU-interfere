@@ -79,6 +79,20 @@ ax.set_ylim(0, seq*1.22)
 ax.set_xticks(range(4)); ax.set_xticklabels(labels)
 ax.set_ylabel("latency (ms)")
 ax.set_title("4.2.2  Warp-scheduler (IPC) interference\ncopy (memory) + compute (FMA), same SM")
+
+# right y-axis: measured warp-scheduler issue-slot use (NCU sm__inst_issued.avg.pct_of_peak_sustained_active)
+ISSUE_COPY, ISSUE_COMPUTE = 12.0, 84.0        # measured alone
+issue_x = [0, 1, 2]
+issue_y = [ISSUE_COPY, ISSUE_COMPUTE, ISSUE_COPY + ISSUE_COMPUTE]   # colocated = combined demand
+ax2 = ax.twinx()
+ax2.set_ylim(0, 110); ax2.set_ylabel("issue-slot use (% of peak)", color="#8B008B")
+ax2.axhline(100, color="#8B008B", ls=":", lw=1)
+ax2.text(3.4, 101.5, "100% = scheduler full", fontsize=7.5, color="#8B008B", ha="right")
+ax2.plot(issue_x, issue_y, "D", color="#8B008B", ms=9, zorder=5)
+for x, y in zip(issue_x, issue_y):
+    lbl = f"{y:.0f}%\n(A+B)" if x == 2 else f"{y:.0f}%"
+    ax2.text(x, y + 3.5, lbl, ha="center", fontsize=8, color="#8B008B", weight="bold")
+ax2.tick_params(axis="y", colors="#8B008B")
 fig.tight_layout(); fig.savefig(os.path.join(FIG, "fig_422_ipc.png"), dpi=150); plt.close(fig)
 
 # ---------- 4.2.3 pipelines ----------
