@@ -67,7 +67,7 @@ def predicted_matrix_markdown(kernels, prof):
     L = ["| interfere? ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
          "|" + "---|" * (len(kernels) + 1)]
     for t in kernels:
-        cells = ["$\\color{red}{Yes}$" if predict(prof[t], prof[a])[2] != "little" else "No"
+        cells = ["Yes" if predict(prof[t], prof[a])[2] != "little" else "No"
                  for a in kernels]
         L.append(f"| **`{t}`** | " + " | ".join(cells) + " |")
     return "\n".join(L)
@@ -161,8 +161,8 @@ def write_report(kernels, prof, mat):
     L.append("")
     L.append("So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded "
              "shared resource. The matrix is symmetric (target/antagonist interchangeable); "
-             "**<span style=\"color:red\">Yes</span>** = a shared resource is oversubscribed "
-             "(`A%+B% ≥ 100%`, predicted interference), **No** = under capacity:\n")
+             "**Yes** = a shared resource is oversubscribed (`A%+B% ≥ 100%`, predicted "
+             "interference), **No** = under capacity:\n")
     L.append(predicted_matrix_markdown(kernels, prof))
     L.append("")
     L.append("Per-pair detail, with the specific bottleneck resource and combined-demand %:\n")

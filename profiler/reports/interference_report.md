@@ -46,16 +46,16 @@ Each value is the kernel's utilization of that resource, in **% of its peak**, m
 - `fma`: **Warp scheduler** (83% of peak) — *intra-SM* resource.
 - `fp64`: **FP64 pipe** (100% of peak) — *intra-SM* resource.
 
-So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded shared resource. The matrix is symmetric (target/antagonist interchangeable); **<span style="color:red">Yes</span>** = a shared resource is oversubscribed (`A%+B% ≥ 100%`, predicted interference), **No** = under capacity:
+So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded shared resource. The matrix is symmetric (target/antagonist interchangeable); **Yes** = a shared resource is oversubscribed (`A%+B% ≥ 100%`, predicted interference), **No** = under capacity:
 
 | interfere? ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
 |---|---|---|---|---|---|---|
 | **`sleep`** | No | No | No | No | No | No |
-| **`dram`** | No | $\color{red}{Yes}$ | $\color{red}{Yes}$ | No | No | No |
-| **`l2`** | No | $\color{red}{Yes}$ | $\color{red}{Yes}$ | $\color{red}{Yes}$ | No | No |
-| **`l1`** | No | No | $\color{red}{Yes}$ | No | No | No |
-| **`fma`** | No | No | No | No | $\color{red}{Yes}$ | No |
-| **`fp64`** | No | No | No | No | No | $\color{red}{Yes}$ |
+| **`dram`** | No | Yes | Yes | No | No | No |
+| **`l2`** | No | Yes | Yes | Yes | No | No |
+| **`l1`** | No | No | Yes | No | No | No |
+| **`fma`** | No | No | No | No | Yes | No |
+| **`fp64`** | No | No | No | No | No | Yes |
 
 Per-pair detail, with the specific bottleneck resource and combined-demand %:
 
