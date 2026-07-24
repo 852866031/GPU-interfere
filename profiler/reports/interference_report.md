@@ -46,18 +46,18 @@ Each value is the kernel's utilization of that resource, in **% of its peak**, m
 - `fma`: **Warp scheduler** (83% of peak) — *intra-SM* resource.
 - `fp64`: **FP64 pipe** (100% of peak) — *intra-SM* resource.
 
-So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded shared resource. The matrix is symmetric (target/antagonist interchangeable); each cell is the peak combined demand, **≥100% ⇒ oversubscribed** (predicted interference), **≥150% ⇒ strong**:
+So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded shared resource. The matrix is symmetric (target/antagonist interchangeable); **<span style="color:red">Yes</span>** = a shared resource is oversubscribed (`A%+B% ≥ 100%`, predicted interference), **No** = under capacity:
 
-| predicted ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
+| interfere? ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
 |---|---|---|---|---|---|---|
-| **`sleep`** | 1% | 69% | 76% | 46% | 83% | 100% |
-| **`dram`** | 69% | 138% | 104% | 73% | 86% | 100% |
-| **`l2`** | 76% | 104% | 153% | 122% | 95% | 100% |
-| **`l1`** | 46% | 73% | 122% | 92% | 88% | 100% |
-| **`fma`** | 83% | 86% | 95% | 88% | 165% | 100% |
-| **`fp64`** | 100% | 100% | 100% | 100% | 100% | 199% |
+| **`sleep`** | No | No | No | No | No | No |
+| **`dram`** | No | $\color{red}{Yes}$ | $\color{red}{Yes}$ | No | No | No |
+| **`l2`** | No | $\color{red}{Yes}$ | $\color{red}{Yes}$ | $\color{red}{Yes}$ | No | No |
+| **`l1`** | No | No | $\color{red}{Yes}$ | No | No | No |
+| **`fma`** | No | No | No | No | $\color{red}{Yes}$ | No |
+| **`fp64`** | No | No | No | No | No | $\color{red}{Yes}$ |
 
-Per-pair detail, with the specific bottleneck resource:
+Per-pair detail, with the specific bottleneck resource and combined-demand %:
 
 | pair | shared bottleneck | combined demand | predicted |
 |---|---|---|---|
@@ -108,7 +108,7 @@ So the footprint estimate is approximate; **Part 2's direct colocation is the re
 
 ## Part 2 — Measured interference (colocation slowdown)
 
-Each cell = slowdown of the **row** kernel when the **column** kernel runs beside it on the same GPU (1.00× = no interference; 2.00× = fully serialized). **<span style="color:green">Green</span>** = the counter prediction agreed; **<span style="color:orange">amber</span>** = the prediction missed — the two footprint/sharing effects counters cannot see (detailed below), not model errors.
+Each cell = slowdown of the **row** kernel when the **column** kernel runs beside it on the same GPU (1.00× = no interference; 2.00× = fully serialized). **<span style="color:orange">Amber</span>** marks the one cell per pair the prediction **missed** (worst direction, matching the Verification table's misses — the two footprint/sharing effects counters cannot see, not model errors); everything else is **<span style="color:green">green</span>** (predicted correctly).
 
 | measured ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
 |---|---|---|---|---|---|---|
@@ -116,8 +116,8 @@ Each cell = slowdown of the **row** kernel when the **column** kernel runs besid
 | **`dram`** | $\color{green}{1.00\times}$ | $\color{green}{1.98\times}$ | $\color{green}{1.07\times}$ | $\color{green}{1.01\times}$ | $\color{green}{1.01\times}$ | $\color{green}{1.00\times}$ |
 | **`l2`** | $\color{green}{0.98\times}$ | $\color{green}{1.40\times}$ | $\color{green}{2.01\times}$ | $\color{green}{1.28\times}$ | $\color{orange}{1.59\times}$ | $\color{orange}{1.25\times}$ |
 | **`l1`** | $\color{green}{0.92\times}$ | $\color{green}{0.92\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{2.50\times}$ | $\color{orange}{1.87\times}$ | $\color{green}{0.95\times}$ |
-| **`fma`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{1.57\times}$ | $\color{orange}{0.97\times}$ | $\color{green}{1.60\times}$ | $\color{orange}{0.93\times}$ |
-| **`fp64`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{0.91\times}$ | $\color{green}{0.98\times}$ | $\color{orange}{2.28\times}$ | $\color{green}{1.80\times}$ |
+| **`fma`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{green}{1.57\times}$ | $\color{green}{0.97\times}$ | $\color{green}{1.60\times}$ | $\color{green}{0.93\times}$ |
+| **`fp64`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{green}{0.98\times}$ | $\color{orange}{2.28\times}$ | $\color{green}{1.80\times}$ |
 
 ## Verification — did the prediction hold?
 

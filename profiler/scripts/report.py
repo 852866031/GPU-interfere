@@ -61,24 +61,32 @@ def agree(pa, pb, sab, sba):
     return (plevel == mlevel) or (plevel != "little" and mlevel != "little")
 
 def predicted_matrix_markdown(kernels, prof):
-    """Predicted interference as a target x antagonist matrix (combined demand %).
+    """Predicted interference as a target x antagonist matrix of Yes/No — Yes (red)
+    when combined demand oversubscribes a shared resource (A%+B% >= 100%), else No.
     Symmetric: the model is A%+B%, so target/antagonist are interchangeable."""
-    L = ["| predicted ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
+    L = ["| interfere? ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
          "|" + "---|" * (len(kernels) + 1)]
     for t in kernels:
-        row = " | ".join(f"{predict(prof[t], prof[a])[1]:.0f}%" for a in kernels)
-        L.append(f"| **`{t}`** | {row} |")
+        cells = ["$\\color{red}{Yes}$" if predict(prof[t], prof[a])[2] != "little" else "No"
+                 for a in kernels]
+        L.append(f"| **`{t}`** | " + " | ".join(cells) + " |")
     return "\n".join(L)
 
 def measured_matrix_colored(kernels, mat, prof):
-    """Measured slowdown matrix, each cell colored by whether the prediction agreed
-    (green) or missed (amber). Uses GitHub-flavored $\\color{}$ math so it renders."""
+    """Measured slowdown matrix. Amber marks exactly one cell per missed pair — the
+    worst-direction cell the verification uses — so the amber count equals the number
+    of misses; everything else is green. GitHub-flavored $\\color{}$ math."""
+    def is_miss_cell(t, a):
+        if agree(prof[t], prof[a], mat[(t, a)], mat[(a, t)]):
+            return False
+        # only the worst direction of the pair (tie-break to one cell for the diagonal)
+        return mat[(t, a)] > mat[(a, t)] or (mat[(t, a)] == mat[(a, t)] and kernels.index(t) <= kernels.index(a))
     L = ["| measured ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
          "|" + "---|" * (len(kernels) + 1)]
     for t in kernels:
         cells = []
         for a in kernels:
-            color = "green" if agree(prof[t], prof[a], mat[(t, a)], mat[(a, t)]) else "orange"
+            color = "orange" if is_miss_cell(t, a) else "green"
             cells.append(f"$\\color{{{color}}}{{{mat[(t, a)]:.2f}\\times}}$")
         L.append(f"| **`{t}`** | " + " | ".join(cells) + " |")
     return "\n".join(L)
@@ -152,12 +160,12 @@ def write_report(kernels, prof, mat):
             L.append(f"- `{k}`: **{LABEL[r]}** ({v:.0f}% of peak) — *{LEVEL[r]}* resource.")
     L.append("")
     L.append("So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded "
-             "shared resource. The matrix is symmetric (target/antagonist interchangeable); each "
-             "cell is the peak combined demand, **≥100% ⇒ oversubscribed** (predicted interference), "
-             "**≥150% ⇒ strong**:\n")
+             "shared resource. The matrix is symmetric (target/antagonist interchangeable); "
+             "**<span style=\"color:red\">Yes</span>** = a shared resource is oversubscribed "
+             "(`A%+B% ≥ 100%`, predicted interference), **No** = under capacity:\n")
     L.append(predicted_matrix_markdown(kernels, prof))
     L.append("")
-    L.append("Per-pair detail, with the specific bottleneck resource:\n")
+    L.append("Per-pair detail, with the specific bottleneck resource and combined-demand %:\n")
     L.append("| pair | shared bottleneck | combined demand | predicted |")
     L.append("|---|---|---|---|")
     pred = {}
@@ -208,9 +216,10 @@ def write_report(kernels, prof, mat):
     L.append("## Part 2 — Measured interference (colocation slowdown)\n")
     L.append("Each cell = slowdown of the **row** kernel when the **column** kernel runs beside "
              "it on the same GPU (1.00× = no interference; 2.00× = fully serialized). "
-             "**<span style=\"color:green\">Green</span>** = the counter prediction agreed; "
-             "**<span style=\"color:orange\">amber</span>** = the prediction missed — the two "
-             "footprint/sharing effects counters cannot see (detailed below), not model errors.\n")
+             "**<span style=\"color:orange\">Amber</span>** marks the one cell per pair the "
+             "prediction **missed** (worst direction, matching the Verification table's misses — "
+             "the two footprint/sharing effects counters cannot see, not model errors); everything "
+             "else is **<span style=\"color:green\">green</span>** (predicted correctly).\n")
     L.append(measured_matrix_colored(kernels, mat, prof))
     L.append("")
 
