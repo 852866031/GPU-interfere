@@ -108,11 +108,63 @@ cannot distinguish "all SMs half-full" from "half the SMs full, half idle". The 
 records, for each block, which physical SM it ran on and its entry/exit time
 (`%smid` + `%globaltimer`), giving the SM-tile animation, blocks/SM, and true occupancy.
 
-It requires code *inside* the kernel, so it works for kernels you compile
-(the `../profiler/` probe registry via `probe trace`), **not** for opaque library kernels
-(cuBLAS/cuDNN) hosted in a Python process — NVBit, the no-source alternative, does not
-instrument Python processes on this stack. Opaque-kernel runs fall back to an honest
-**uniform tile fill** driven by the device-average occupancy lane (labeled as such).
+It requires code *inside* the kernel, so it works only for kernels you **compile**
+(the `../profiler/` probe registry via `probe trace`).
+
+> ### ⚠️ What the SM-tile animation is actually showing
+>
+> The per-SM tiles have **two** data sources, and which one is in play depends on the run:
+>
+> | run type | tiles are… | source |
+> |---|---|---|
+> | compiled kernels with a trace (`probe trace …`) | **real** — actual blocks per SM, over time | `%smid` block trace (exact) |
+> | opaque kernels (PyTorch / any un-traced run) | **inferred** — every tile shows the *same* fill = device-average occupancy | the `Warp occupancy` lane |
+>
+> So for a PyTorch run (e.g. `llama3_prefill`, `llama3_sm50`) the tiles are **not** a real
+> per-SM measurement — they are the device average spread uniformly across all 170 tiles,
+> because no per-SM data exists for opaque kernels here. That average is identical whether
+> the truth is "all SMs half-full" or "half the SMs full, half idle", so the animation can
+> *look* like all SMs are used even when (e.g. under MPS 50%) only half really are. The GUI
+> labels this in the tile tooltip; treat un-traced tiles as "device average, not per-SM".
+
+### Why we can't get per-SM data for PyTorch kernels — NVBit
+
+Per-SM placement of **opaque** kernels (cuBLAS/cuDNN/attention — no source) would need
+**NVBit**, NVIDIA's binary-instrumentation framework, which injects the same `%smid` read
+into precompiled SASS. We tested it (v1.7.5 and v1.8) and it **does not work in any
+Python process on this machine.**
+
+**What NVBit would give us** (if it worked here): a real block→SM trace of the *actual*
+torch kernels — the true per-SM tile animation (which SMs a real GEMM used, wave fill/drain,
+underfill shown as dark tiles, two-tenant coloring under colocation), plus, via its
+memory-trace tools, a kernel's real working-set **footprint** — the one cache-capacity
+signal that hardware counters structurally cannot report.
+
+**What limits us — tested, minimally reproduced:**
+- NVBit instruments our **compiled** binaries on this GPU *exactly* (validated: C
+  executables, C programs that `dlopen` a CUDA `.so`, both `LD_PRELOAD` and
+  `CUDA_INJECTION64_PATH`, sm_120 / driver 580 / CUDA 12.8).
+- NVBit produces **zero events in a Python process** — reproduced with the *same* CUDA
+  `.so` loaded from a C program (works) vs. from `python3 -c "ctypes.CDLL(...).run()"`
+  (nothing). Not torch-specific; any Python host fails.
+- Ruled out by direct test: NVBit version (1.7.5 ≡ 1.8), CUDA toolkit mismatch (all
+  12.8), the CUPTI single-client slot (a full `libcupti` stub didn't help), lazy module
+  loading, cudart/libcuda identity, conda-vs-system Python, symbol scope, process re-exec.
+- Also mutually exclusive with `nsys` (same counter slot), so even if it worked, a per-SM
+  trace could never share a recording with the rate lanes — it would be a separate pass.
+
+**Suspected cause (unconfirmed):** a Python-process × driver-580 interaction of unknown
+mechanism. A *simple* "driver too new" ceiling is **ruled out** — compiled binaries work
+on driver 580 — so it must be something specific to how a Python process sets up CUDA
+(late/lazy loading order, signal handlers vs. NVBit's channel thread, …) that we could not
+isolate. Confirming it would require testing NVBit-in-Python on an older driver (not
+practical on this shared box) or filing the minimal repro with NVlabs.
+
+**The one route that *does* work:** NVBit is gated by the **host process, not the kernel**
+— it instruments opaque library kernels fine *from a compiled program*. So the real
+cuBLAS/attention kernels a transformer uses *are* traceable if driven from a **C++ harness**
+fed the layer shapes, just not while Python is the host. See `../profiler/` for the probe
+harness this would extend.
 
 ---
 
@@ -237,11 +289,36 @@ ssh -L 8000:localhost:8000 <user>@<gpu-host>   # then run serve.sh on the host
 - **Sub-~100 µs lane detail** — the PM-sampling floor; kernels shorter than a bucket smear
   in the lanes (but still appear exactly on the timeline and SM tiles).
 
-## Requirements
+## Requirements & installation
 
-- NVIDIA GPU (developed on RTX 5090 / GB202, `sm_120`, 170 SMs), driver with GPU-metrics
-  support.
-- CUDA 12.8, Nsight Systems 2024.6 (`nsys`), `sqlite3`, Python 3 (stdlib only for the
-  server; the workload scripts need whatever they import, e.g. torch).
-- GPU performance-counter access enabled for `nsys` GPU metrics.
-- The counter hardware is single-client: do not run nsys/NCU concurrently.
+Developed and tested on this exact stack (RTX 5090 / GB202, `sm_120`, 170 SMs):
+
+| component | version | why |
+|---|---|---|
+| OS | Ubuntu 24.04.2 LTS | — |
+| NVIDIA driver | 580.126.09 | must support GPU-metrics sampling |
+| CUDA Toolkit | 12.8 (`nvcc` V12.8.93) | build the `../profiler` probe (for traces) |
+| Nsight Systems (`nsys`) | 2024.6.2 | recording; `gb20x-l2.config` is pinned to this version |
+| sqlite3 | 3.45.3 | nsys export → run JSON |
+| Python | 3.12.9 | stdlib only for the server & extract.py |
+| PyTorch (workloads only) | 2.8.0 (cu128) | needed by `workloads/llama_prefill.py` |
+| transformers (workloads only) | 4.45.0 | Llama-3 loading |
+
+Install the pieces:
+
+```bash
+# nsys + nvcc come with the CUDA Toolkit 12.8 (already on the machine at /usr/local/cuda-12.8)
+sudo apt-get install -y sqlite3                       # if not present
+# the server, record.py and extract.py use only the Python standard library — nothing to pip-install
+
+# only if you run the bundled ML workloads:
+pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128
+pip install transformers==4.45.0
+```
+
+- **GPU performance-counter access must be enabled** for `nsys` GPU metrics. If sampling
+  returns nothing, enable it (personal workstation):
+  `echo 'options nvidia NVreg_RestrictProfilingToAdminUsers=0' | sudo tee /etc/modprobe.d/nvidia-profiler.conf && sudo update-initramfs -u && sudo reboot`.
+- The counter hardware is **single-client**: do not run `nsys` and `ncu` concurrently.
+- MPS SM-limiting (optional) uses `nvidia-cuda-mps-control`, shipped with the driver.
+- A different GPU generation needs a matching nsys metric set (replace `gb20x-l2.config`).
