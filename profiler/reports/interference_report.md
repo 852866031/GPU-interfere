@@ -44,9 +44,20 @@ Each value is the kernel's utilization of that resource, in **% of its peak**, m
 - `l2`: **L2 cache** (76% of peak) — *inter-SM* resource.
 - `l1`: **L2 cache** (46% of peak) — *inter-SM* resource.
 - `fma`: **Warp scheduler** (83% of peak) — *intra-SM* resource.
-- `fp64`: **FP64 pipe** (99% of peak) — *intra-SM* resource.
+- `fp64`: **FP64 pipe** (100% of peak) — *intra-SM* resource.
 
-So we predict, per the counters (combined demand `A%+B%`):
+So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded shared resource. The matrix is symmetric (target/antagonist interchangeable); each cell is the peak combined demand, **≥100% ⇒ oversubscribed** (predicted interference), **≥150% ⇒ strong**:
+
+| predicted ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
+|---|---|---|---|---|---|---|
+| **`sleep`** | 1% | 69% | 76% | 46% | 83% | 100% |
+| **`dram`** | 69% | 138% | 104% | 73% | 86% | 100% |
+| **`l2`** | 76% | 104% | 153% | 122% | 95% | 100% |
+| **`l1`** | 46% | 73% | 122% | 92% | 88% | 100% |
+| **`fma`** | 83% | 86% | 95% | 88% | 165% | 100% |
+| **`fp64`** | 100% | 100% | 100% | 100% | 100% | 199% |
+
+Per-pair detail, with the specific bottleneck resource:
 
 | pair | shared bottleneck | combined demand | predicted |
 |---|---|---|---|
@@ -55,21 +66,21 @@ So we predict, per the counters (combined demand `A%+B%`):
 | `sleep` + `l2` | — (all under capacity) | 76% | **little interference** |
 | `sleep` + `l1` | — (all under capacity) | 46% | **little interference** |
 | `sleep` + `fma` | — (all under capacity) | 83% | **little interference** |
-| `sleep` + `fp64` | — (all under capacity) | 99% | **little interference** |
+| `sleep` + `fp64` | — (all under capacity) | 100% | **little interference** |
 | `dram` + `dram` | DRAM bandwidth | 138% | **moderate interference** |
 | `dram` + `l2` | L2 cache | 104% | **moderate interference** |
 | `dram` + `l1` | — (all under capacity) | 73% | **little interference** |
 | `dram` + `fma` | — (all under capacity) | 86% | **little interference** |
-| `dram` + `fp64` | — (all under capacity) | 99% | **little interference** |
+| `dram` + `fp64` | — (all under capacity) | 100% | **little interference** |
 | `l2` + `l2` | L2 cache | 153% | **STRONG interference** |
 | `l2` + `l1` | L2 cache | 122% | **moderate interference** |
 | `l2` + `fma` | — (all under capacity) | 95% | **little interference** |
-| `l2` + `fp64` | — (all under capacity) | 99% | **little interference** |
+| `l2` + `fp64` | — (all under capacity) | 100% | **little interference** |
 | `l1` + `l1` | — (all under capacity) | 92% | **little interference** |
 | `l1` + `fma` | — (all under capacity) | 88% | **little interference** |
-| `l1` + `fp64` | — (all under capacity) | 99% | **little interference** |
+| `l1` + `fp64` | — (all under capacity) | 100% | **little interference** |
 | `fma` + `fma` | Warp scheduler | 165% | **STRONG interference** |
-| `fma` + `fp64` | — (all under capacity) | 99% | **little interference** |
+| `fma` + `fp64` | — (all under capacity) | 100% | **little interference** |
 | `fp64` + `fp64` | FP64 pipe | 199% | **STRONG interference** |
 
 ### Why cache **capacity** isn't in the prediction — and what one kernel *can* reveal
@@ -97,16 +108,16 @@ So the footprint estimate is approximate; **Part 2's direct colocation is the re
 
 ## Part 2 — Measured interference (colocation slowdown)
 
-Each cell = slowdown of the **row** kernel when the **column** kernel runs beside it on the same GPU (1.00× = no interference; 2.00× = fully serialized).
+Each cell = slowdown of the **row** kernel when the **column** kernel runs beside it on the same GPU (1.00× = no interference; 2.00× = fully serialized). **<span style="color:green">Green</span>** = the counter prediction agreed; **<span style="color:orange">amber</span>** = the prediction missed — the two footprint/sharing effects counters cannot see (detailed below), not model errors.
 
-| target ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
+| measured ↓ \ with → | `sleep` | `dram` | `l2` | `l1` | `fma` | `fp64` |
 |---|---|---|---|---|---|---|
-| **`sleep`** | 1.00× | 1.00× | 1.00× | 1.00× | 1.00× | 1.00× |
-| **`dram`** | 1.00× | 1.98× | 1.07× | 1.01× | 1.01× | 1.00× |
-| **`l2`** | 0.98× | 1.40× | 2.01× | 1.28× | 1.59× | 1.25× |
-| **`l1`** | 0.92× | 0.92× | 0.91× | 2.50× | 1.87× | 0.95× |
-| **`fma`** | 0.91× | 0.91× | 1.57× | 0.97× | 1.60× | 0.93× |
-| **`fp64`** | 0.91× | 0.91× | 0.91× | 0.98× | 2.28× | 1.80× |
+| **`sleep`** | $\color{green}{1.00\times}$ | $\color{green}{1.00\times}$ | $\color{green}{1.00\times}$ | $\color{green}{1.00\times}$ | $\color{green}{1.00\times}$ | $\color{green}{1.00\times}$ |
+| **`dram`** | $\color{green}{1.00\times}$ | $\color{green}{1.98\times}$ | $\color{green}{1.07\times}$ | $\color{green}{1.01\times}$ | $\color{green}{1.01\times}$ | $\color{green}{1.00\times}$ |
+| **`l2`** | $\color{green}{0.98\times}$ | $\color{green}{1.40\times}$ | $\color{green}{2.01\times}$ | $\color{green}{1.28\times}$ | $\color{orange}{1.59\times}$ | $\color{orange}{1.25\times}$ |
+| **`l1`** | $\color{green}{0.92\times}$ | $\color{green}{0.92\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{2.50\times}$ | $\color{orange}{1.87\times}$ | $\color{green}{0.95\times}$ |
+| **`fma`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{1.57\times}$ | $\color{orange}{0.97\times}$ | $\color{green}{1.60\times}$ | $\color{orange}{0.93\times}$ |
+| **`fp64`** | $\color{green}{0.91\times}$ | $\color{green}{0.91\times}$ | $\color{orange}{0.91\times}$ | $\color{green}{0.98\times}$ | $\color{orange}{2.28\times}$ | $\color{green}{1.80\times}$ |
 
 ## Verification — did the prediction hold?
 
@@ -117,21 +128,21 @@ Each cell = slowdown of the **row** kernel when the **column** kernel runs besid
 | `sleep` + `l2` | little (76%) | 1.00× (little) | ✅ |
 | `sleep` + `l1` | little (46%) | 1.00× (little) | ✅ |
 | `sleep` + `fma` | little (83%) | 1.00× (little) | ✅ |
-| `sleep` + `fp64` | little (99%) | 1.00× (little) | ✅ |
+| `sleep` + `fp64` | little (100%) | 1.00× (little) | ✅ |
 | `dram` + `dram` | moderate (138%) | 1.98× (STRONG) | ✅ |
 | `dram` + `l2` | moderate (104%) | 1.40× (moderate) | ✅ |
 | `dram` + `l1` | little (73%) | 1.01× (little) | ✅ |
 | `dram` + `fma` | little (86%) | 1.01× (little) | ✅ |
-| `dram` + `fp64` | little (99%) | 1.00× (little) | ✅ |
+| `dram` + `fp64` | little (100%) | 1.00× (little) | ✅ |
 | `l2` + `l2` | STRONG (153%) | 2.01× (STRONG) | ✅ |
 | `l2` + `l1` | moderate (122%) | 1.28× (moderate) | ✅ |
 | `l2` + `fma` | little (95%) | 1.59× (STRONG) | ⚠️ miss |
-| `l2` + `fp64` | little (99%) | 1.25× (moderate) | ⚠️ miss |
+| `l2` + `fp64` | little (100%) | 1.25× (moderate) | ⚠️ miss |
 | `l1` + `l1` | little (92%) | 2.50× (STRONG) | ⚠️ miss |
 | `l1` + `fma` | little (88%) | 1.87× (STRONG) | ⚠️ miss |
-| `l1` + `fp64` | little (99%) | 0.98× (little) | ✅ |
+| `l1` + `fp64` | little (100%) | 0.98× (little) | ✅ |
 | `fma` + `fma` | STRONG (165%) | 1.60× (STRONG) | ✅ |
-| `fma` + `fp64` | little (99%) | 2.28× (STRONG) | ⚠️ miss |
+| `fma` + `fp64` | little (100%) | 2.28× (STRONG) | ⚠️ miss |
 | `fp64` + `fp64` | STRONG (199%) | 1.80× (STRONG) | ✅ |
 
 ### Conclusions

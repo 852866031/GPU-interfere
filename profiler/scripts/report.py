@@ -8,7 +8,7 @@ Usage: python3 report.py [kernel ...]     (default: sleep dram l2 l1 fma fp64)
 """
 import os, sys, itertools
 from measure_kernels import profile_kernels, table_markdown, METRICS
-from measure_interference import measure_matrix, matrix_markdown
+from measure_interference import measure_matrix
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RATE = [m for m in METRICS if m[4] in ("inter-SM", "intra-SM")]   # resources you can oversubscribe
@@ -54,13 +54,44 @@ def measured_level(s):
     if s >= 1.15: return "moderate"
     return "little"
 
+def agree(pa, pb, sab, sba):
+    """Did the counter prediction match the measured slowdown for this pair?"""
+    _, _, plevel = predict(pa, pb)
+    mlevel = measured_level(max(sab, sba))
+    return (plevel == mlevel) or (plevel != "little" and mlevel != "little")
+
+def predicted_matrix_markdown(kernels, prof):
+    """Predicted interference as a target x antagonist matrix (combined demand %).
+    Symmetric: the model is A%+B%, so target/antagonist are interchangeable."""
+    L = ["| predicted ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
+         "|" + "---|" * (len(kernels) + 1)]
+    for t in kernels:
+        row = " | ".join(f"{predict(prof[t], prof[a])[1]:.0f}%" for a in kernels)
+        L.append(f"| **`{t}`** | {row} |")
+    return "\n".join(L)
+
+def measured_matrix_colored(kernels, mat, prof):
+    """Measured slowdown matrix, each cell colored by whether the prediction agreed
+    (green) or missed (amber). Uses GitHub-flavored $\\color{}$ math so it renders."""
+    L = ["| measured ↓ \\ with → | " + " | ".join(f"`{a}`" for a in kernels) + " |",
+         "|" + "---|" * (len(kernels) + 1)]
+    for t in kernels:
+        cells = []
+        for a in kernels:
+            color = "green" if agree(prof[t], prof[a], mat[(t, a)], mat[(a, t)]) else "orange"
+            cells.append(f"$\\color{{{color}}}{{{mat[(t, a)]:.2f}\\times}}$")
+        L.append(f"| **`{t}`** | " + " | ".join(cells) + " |")
+    return "\n".join(L)
+
 def main():
     kernels = sys.argv[1:] or ["sleep", "dram", "l2", "l1", "fma", "fp64"]
     print("Part 1: NCU-profiling kernels ...", file=sys.stderr)
     prof = profile_kernels(kernels)
     print("Part 2: measuring interference matrix ...", file=sys.stderr)
     mat = measure_matrix(kernels)
+    write_report(kernels, prof, mat)
 
+def write_report(kernels, prof, mat):
     L = []
     L.append("# GPU Kernel Colocation Interference Report\n")
     L.append("Two independent measurement stages: **Part 1** fingerprints each kernel "
@@ -120,7 +151,13 @@ def main():
         else:
             L.append(f"- `{k}`: **{LABEL[r]}** ({v:.0f}% of peak) — *{LEVEL[r]}* resource.")
     L.append("")
-    L.append("So we predict, per the counters (combined demand `A%+B%`):\n")
+    L.append("So we predict, per the counters — **combined demand `A%+B%`** on the most-loaded "
+             "shared resource. The matrix is symmetric (target/antagonist interchangeable); each "
+             "cell is the peak combined demand, **≥100% ⇒ oversubscribed** (predicted interference), "
+             "**≥150% ⇒ strong**:\n")
+    L.append(predicted_matrix_markdown(kernels, prof))
+    L.append("")
+    L.append("Per-pair detail, with the specific bottleneck resource:\n")
     L.append("| pair | shared bottleneck | combined demand | predicted |")
     L.append("|---|---|---|---|")
     pred = {}
@@ -170,8 +207,11 @@ def main():
     # ---------------- Part 2 ----------------
     L.append("## Part 2 — Measured interference (colocation slowdown)\n")
     L.append("Each cell = slowdown of the **row** kernel when the **column** kernel runs beside "
-             "it on the same GPU (1.00× = no interference; 2.00× = fully serialized).\n")
-    L.append(matrix_markdown(kernels, mat))
+             "it on the same GPU (1.00× = no interference; 2.00× = fully serialized). "
+             "**<span style=\"color:green\">Green</span>** = the counter prediction agreed; "
+             "**<span style=\"color:orange\">amber</span>** = the prediction missed — the two "
+             "footprint/sharing effects counters cannot see (detailed below), not model errors.\n")
+    L.append(measured_matrix_colored(kernels, mat, prof))
     L.append("")
 
     # ---------------- Verification ----------------
